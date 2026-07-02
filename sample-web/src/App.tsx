@@ -77,7 +77,7 @@ export default function App() {
       })
       .catch(() => {
         if (!cancelled) {
-          setError("Khong tai duoc thu vien dang nhap Google.");
+          setError("Không tải được thư viện đăng nhập Google.");
         }
       });
 
@@ -95,7 +95,7 @@ export default function App() {
       client_id: config.googleClientId,
       callback: async (response: { credential?: string }) => {
         if (!response.credential) {
-          setError("Google khong tra ve token dang nhap.");
+          setError("Google không trả về token đăng nhập.");
           return;
         }
         console.info("[auth] received Google credential", summarizeGoogleCredential(response.credential));
@@ -183,7 +183,7 @@ export default function App() {
   async function handleGoogleLogin(credential: string) {
     setAuthenticating(true);
     setError("");
-    setMessage("Dang xac thuc tai khoan Google...");
+    setMessage("Đang xác thực tài khoản Google...");
 
     try {
       console.info("[auth] sending Google credential to backend", {
@@ -195,7 +195,7 @@ export default function App() {
       saveToken(response.accessToken);
       saveUser(JSON.stringify(response.user));
       setUser(response.user);
-      setMessage("Dang nhap thanh cong.");
+      setMessage("Đăng nhập thành công.");
       await bootstrap();
     } catch (loginError) {
       handleApiError(loginError);
@@ -208,10 +208,10 @@ export default function App() {
     try {
       if (editingExpense) {
         await api.updateExpense(editingExpense.id, payload);
-        setMessage("Da cap nhat khoan chi.");
+        setMessage("Đã cập nhật khoản chi.");
       } else {
         await api.createExpense(payload);
-        setMessage("Da them khoan chi moi.");
+        setMessage("Đã thêm khoản chi mới.");
       }
 
       setShowExpenseForm(false);
@@ -225,14 +225,14 @@ export default function App() {
 
   async function handleUploadExpenseImage(file: File) {
     const response = await api.uploadExpenseImage(file);
-    setMessage("Da tai anh hoa don len server.");
+    setMessage("Đã tải ảnh hóa đơn lên server.");
     return response.url;
   }
 
   async function handleDeleteExpense(expenseId: number) {
     try {
       await api.deleteExpense(expenseId);
-      setMessage("Da huy khoan chi.");
+      setMessage("Đã xóa khoản chi.");
       await refreshOverview();
       await refreshPeriodData(year, month);
     } catch (deleteError) {
@@ -243,7 +243,7 @@ export default function App() {
   async function handleUserRoleChange(userId: number, role: UserRole) {
     try {
       await api.updateUserRole(userId, role);
-      setMessage("Da cap nhat quyen thanh vien.");
+      setMessage("Đã cập nhật quyền thành viên.");
       await refreshOverview();
     } catch (roleError) {
       handleApiError(roleError);
@@ -253,7 +253,7 @@ export default function App() {
   async function handleUserStatusChange(userId: number, active: boolean) {
     try {
       await api.updateUserStatus(userId, active);
-      setMessage(active ? "Da mo khoa thanh vien." : "Da khoa thanh vien.");
+      setMessage(active ? "Đã mở khóa thành viên." : "Đã khóa thành viên.");
       await refreshOverview();
     } catch (statusError) {
       handleApiError(statusError);
@@ -263,7 +263,7 @@ export default function App() {
   async function handleGenerateSettlements() {
     try {
       await api.generateSettlements(year, month);
-      setMessage("Da tao danh sach quyet toan thang.");
+      setMessage("Đã tạo danh sách quyết toán tháng.");
       await refreshPeriodData(year, month);
     } catch (generateError) {
       handleApiError(generateError);
@@ -273,7 +273,7 @@ export default function App() {
   async function handleSettlementStatus(settlementId: number, status: SettlementStatus) {
     try {
       await api.updateSettlementStatus(settlementId, status);
-      setMessage(status === "PAID" ? "Da danh dau da thanh toan." : "Da chuyen ve trang thai cho thanh toan.");
+      setMessage(status === "PAID" ? "Đã đánh dấu đã thanh toán." : "Đã chuyển về trạng thái chờ thanh toán.");
       await refreshPeriodData(year, month);
     } catch (settlementError) {
       handleApiError(settlementError);
@@ -304,7 +304,7 @@ export default function App() {
 
   function handleApiError(errorValue: unknown) {
     console.error("[app] api error", errorValue);
-    const nextMessage = errorValue instanceof Error ? errorValue.message : "Da co loi xay ra.";
+    const nextMessage = errorValue instanceof Error ? errorValue.message : "Đã có lỗi xảy ra.";
     setError(nextMessage);
   }
 
@@ -314,16 +314,16 @@ export default function App() {
         <section className="auth-card">
           <div className="brand-mark">₫</div>
           <p className="eyebrow">Family Expense PWA</p>
-          <h1>Quan ly chi tieu gia dinh trong mot cham</h1>
+          <h1>Quản lý chi tiêu gia đình trong một chạm</h1>
           <p className="lead">
-            Dang nhap bang Google, backend se tao JWT rieng cho he thong va frontend su dung Bearer Token cho toan bo API.
+            Đăng nhập bằng Google, backend sẽ tạo JWT riêng cho hệ thống và frontend sử dụng Bearer Token cho toàn bộ API.
           </p>
           {config.googleClientId ? (
             <div className="google-login-box" ref={googleButtonRef} />
           ) : (
-            <p className="warning-text">Chua cau hinh VITE_GOOGLE_CLIENT_ID.</p>
+            <p className="warning-text">Chưa cấu hình `VITE_GOOGLE_CLIENT_ID`.</p>
           )}
-          {authenticating && <p className="helper-text">Dang xac thuc...</p>}
+          {authenticating && <p className="helper-text">Đang xác thực...</p>}
           {message && <p className="helper-text">{message}</p>}
           {error && <p className="error-text">{error}</p>}
         </section>
@@ -343,7 +343,7 @@ export default function App() {
         </button>
       </header>
 
-      {loading && <div className="status-banner">Dang tai du lieu...</div>}
+      {loading && <div className="status-banner">Đang tải dữ liệu...</div>}
       {message && <div className="status-banner success">{message}</div>}
       {error && <div className="status-banner error">{error}</div>}
 
@@ -388,16 +388,16 @@ export default function App() {
         )}
       </section>
 
-      <button className="fab-button" onClick={openCreateExpense} type="button" aria-label="Them khoan chi">
+      <button className="fab-button" onClick={openCreateExpense} type="button" aria-label="Thêm khoản chi">
         +
       </button>
 
       <nav className="bottom-nav">
         {[
-          { key: "home", label: "Trang chu" },
-          { key: "expenses", label: "Khoan chi" },
-          { key: "reports", label: "Bao cao" },
-          { key: "account", label: "Tai khoan" }
+          { key: "home", label: "Trang chủ" },
+          { key: "expenses", label: "Khoản chi" },
+          { key: "reports", label: "Báo cáo" },
+          { key: "account", label: "Tài khoản" }
         ].map((item) => (
           <button
             key={item.key}
@@ -441,41 +441,41 @@ function HomeTab({
       <section className="hero-card">
         <div className="hero-row">
           <div>
-            <p className="hero-subtitle">Xin chao, {user.fullName}</p>
-            <h2>Them khoan chi trong duoi 20 giay</h2>
+            <p className="hero-subtitle">Xin chào, {user.fullName}</p>
+            <h2>Thêm khoản chi trong dưới 20 giây</h2>
             <p>
-              Chon nguoi thanh toan, chon kieu chia, backend se tu tinh so tien tung thanh vien phai chiu.
+              Người thanh toán được lấy từ tài khoản đăng nhập, backend sẽ tự tính số tiền từng thành viên phải chịu.
             </p>
           </div>
           <img className="hero-avatar" alt={user.fullName} src={user.avatarUrl || fallbackAvatar(user.fullName)} />
         </div>
         <button className="primary-button" onClick={onAddExpense} type="button">
-          Them khoan chi moi
+          Thêm khoản chi mới
         </button>
       </section>
 
       <section className="metrics-grid">
-        <MetricCard label="Tong chi thang nay" value={formatCurrency(dashboard?.monthTotal || 0)} />
-        <MetricCard label="Chi hom nay" value={formatCurrency(dashboard?.todayTotal || 0)} />
-        <MetricCard label="So khoan chi thang nay" value={String(dashboard?.monthExpenseCount || 0)} />
+        <MetricCard label="Tổng chi tháng này" value={formatCurrency(dashboard?.monthTotal || 0)} />
+        <MetricCard label="Chi hôm nay" value={formatCurrency(dashboard?.todayTotal || 0)} />
+        <MetricCard label="Số khoản chi tháng này" value={String(dashboard?.monthExpenseCount || 0)} />
         <MetricCard
-          label="Nguoi thanh toan nhieu nhat"
-          value={dashboard?.topPayerName ? `${dashboard.topPayerName} · ${formatCurrency(dashboard.topPayerAmount)}` : "Chua co"}
+          label="Người thanh toán nhiều nhất"
+          value={dashboard?.topPayerName ? `${dashboard.topPayerName} · ${formatCurrency(dashboard.topPayerAmount)}` : "Chưa có"}
         />
       </section>
 
       <section className="panel-card">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Gan day</p>
-            <h3>Khoan chi moi nhat</h3>
+            <p className="eyebrow">Gần đây</p>
+            <h3>Khoản chi mới nhất</h3>
           </div>
         </div>
         <div className="list-stack">
           {(dashboard?.recentExpenses || []).map((expense) => (
             <ExpenseItem key={expense.id} expense={expense} compact />
           ))}
-          {!dashboard?.recentExpenses?.length && <p className="muted-text">Chua co khoan chi nao trong thang nay.</p>}
+          {!dashboard?.recentExpenses?.length && <p className="muted-text">Chưa có khoản chi nào trong tháng này.</p>}
         </div>
       </section>
     </div>
@@ -498,11 +498,11 @@ function ExpensesTab({
       <section className="panel-card">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Timeline</p>
-            <h3>Danh sach khoan chi</h3>
+            <p className="eyebrow">Dòng thời gian</p>
+            <h3>Danh sách khoản chi</h3>
           </div>
           <button className="secondary-button" onClick={onCreate} type="button">
-            Them moi
+            Thêm mới
           </button>
         </div>
 
@@ -515,7 +515,7 @@ function ExpensesTab({
               onDelete={() => onDelete(expense.id)}
             />
           ))}
-          {!expenses.length && <p className="muted-text">Chua co du lieu khoan chi.</p>}
+          {!expenses.length && <p className="muted-text">Chưa có dữ liệu khoản chi.</p>}
         </div>
       </section>
     </div>
@@ -544,14 +544,14 @@ function ReportsTab({
       <section className="panel-card">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Bao cao thang</p>
-            <h3>Tong hop thanh toan va phan bo chi phi</h3>
+            <p className="eyebrow">Báo cáo tháng</p>
+            <h3>Tổng hợp thanh toán và phân bổ chi phí</h3>
           </div>
           <div className="period-controls">
             <select value={month} onChange={(event) => onPeriodChange(year, Number(event.target.value))}>
               {Array.from({ length: 12 }, (_, index) => index + 1).map((item) => (
                 <option key={item} value={item}>
-                  Thang {item}
+                  Tháng {item}
                 </option>
               ))}
             </select>
@@ -560,8 +560,8 @@ function ReportsTab({
         </div>
 
         <div className="metrics-grid">
-          <MetricCard label="Tong da chi" value={formatCurrency(report?.totalExpenseAmount || 0)} />
-          <MetricCard label="Tong so khoan chi" value={String(report?.totalExpenseCount || 0)} />
+          <MetricCard label="Tổng đã chi" value={formatCurrency(report?.totalExpenseAmount || 0)} />
+          <MetricCard label="Tổng số khoản chi" value={String(report?.totalExpenseCount || 0)} />
         </div>
 
         <div className="list-stack">
@@ -569,8 +569,8 @@ function ReportsTab({
             <article className="member-balance-card" key={member.userId}>
               <div>
                 <strong>{member.fullName}</strong>
-                <p>Da thanh toan: {formatCurrency(member.paidAmount)}</p>
-                <p>Phai chiu: {formatCurrency(member.shareAmount)}</p>
+                <p>Đã thanh toán: {formatCurrency(member.paidAmount)}</p>
+                <p>Phải chịu: {formatCurrency(member.shareAmount)}</p>
               </div>
               <span className={member.balance >= 0 ? "balance-pill positive" : "balance-pill negative"}>
                 {member.balance >= 0 ? "+" : ""}
@@ -584,11 +584,11 @@ function ReportsTab({
       <section className="panel-card">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Goi y chuyen tien</p>
-            <h3>Ket qua quyet toan cuoi thang</h3>
+            <p className="eyebrow">Gợi ý chuyển tiền</p>
+            <h3>Kết quả quyết toán cuối tháng</h3>
           </div>
           <button className="secondary-button" onClick={onGenerateSettlements} type="button">
-            Tao quyet toan
+            Tạo quyết toán
           </button>
         </div>
 
@@ -596,21 +596,21 @@ function ReportsTab({
           {report?.suggestions.map((item, index) => (
             <article className="settlement-suggestion-card" key={`${item.fromUserId}-${item.toUserId}-${index}`}>
               <strong>{item.fromUserName}</strong>
-              <span>chuyen</span>
+              <span>chuyển</span>
               <strong>{formatCurrency(item.amount)}</strong>
               <span>cho</span>
               <strong>{item.toUserName}</strong>
             </article>
           ))}
-          {!report?.suggestions?.length && <p className="muted-text">Thang nay chua can tao quyet toan.</p>}
+          {!report?.suggestions?.length && <p className="muted-text">Tháng này chưa cần tạo quyết toán.</p>}
         </div>
       </section>
 
       <section className="panel-card">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Danh sach quyet toan</p>
-            <h3>Theo doi trang thai thanh toan</h3>
+            <p className="eyebrow">Danh sách quyết toán</p>
+            <h3>Theo dõi trạng thái thanh toán</h3>
           </div>
         </div>
 
@@ -630,11 +630,11 @@ function ReportsTab({
                 }
                 type="button"
               >
-                {settlement.status === "PAID" ? "Da thanh toan" : "Cho thanh toan"}
+                {settlement.status === "PAID" ? "Đã thanh toán" : "Chờ thanh toán"}
               </button>
             </article>
           ))}
-          {!settlements.length && <p className="muted-text">Chua co ban ghi quyet toan nao.</p>}
+          {!settlements.length && <p className="muted-text">Chưa có bản ghi quyết toán nào.</p>}
         </div>
       </section>
     </div>
@@ -666,7 +666,7 @@ function AccountTab({
           </div>
         </div>
         <button className="secondary-button danger" onClick={onLogout} type="button">
-          Dang xuat
+          Đăng xuất
         </button>
       </section>
 
@@ -674,7 +674,7 @@ function AccountTab({
         <section className="panel-card">
           <div className="panel-heading">
             <div>
-              <p className="eyebrow">Quan ly thanh vien</p>
+              <p className="eyebrow">Quản lý thành viên</p>
               <h3>Admin panel</h3>
             </div>
           </div>
@@ -698,7 +698,7 @@ function AccountTab({
                     onClick={() => onUserStatusChange(member.id, !member.active)}
                     type="button"
                   >
-                    {member.active ? "Khoa" : "Mo khoa"}
+                    {member.active ? "Khóa" : "Mở khóa"}
                   </button>
                 </div>
               </article>
@@ -733,8 +733,8 @@ function ExpenseFormSheet({
   const [amount, setAmount] = useState<string>(initialExpense ? String(initialExpense.amount) : "");
   const [description, setDescription] = useState<string>(initialExpense?.description || "");
   const [imageUrl, setImageUrl] = useState<string>(initialExpense?.imageUrl || "");
-  const [expenseDate, setExpenseDate] = useState<string>(initialExpense?.expenseDate || formatDateInput(new Date()));
-  const [payerId, setPayerId] = useState<number>(initialExpense?.payerId || currentUser.id || activeUsers[0]?.id || 0);
+  const expenseDate = initialExpense?.expenseDate || formatDateInput(new Date());
+  const payerId = initialExpense?.payerId || currentUser.id || activeUsers[0]?.id || 0;
   const [splitType, setSplitType] = useState<ExpenseSplitType>(initialExpense?.splitType || "EQUAL");
   const [selectedIds, setSelectedIds] = useState<number[]>(initialSelectedIds);
   const [manualShares, setManualShares] = useState<Record<number, string>>(() => {
@@ -776,7 +776,7 @@ function ExpenseFormSheet({
       const nextImageUrl = await onUploadImage(selectedFile);
       setImageUrl(nextImageUrl);
     } catch (uploadError) {
-      setFormError(uploadError instanceof Error ? uploadError.message : "Khong tai duoc anh hoa don.");
+      setFormError(uploadError instanceof Error ? uploadError.message : "Không tải được ảnh hóa đơn.");
     } finally {
       setUploadingImage(false);
       event.target.value = "";
@@ -788,12 +788,12 @@ function ExpenseFormSheet({
     setFormError("");
 
     if (!numericAmount || numericAmount <= 0) {
-      setFormError("Tong tien phai lon hon 0.");
+      setFormError("Tổng tiền phải lớn hơn 0.");
       return;
     }
 
     if (!selectedIds.length) {
-      setFormError("Hay chon it nhat mot nguoi chiu tien.");
+      setFormError("Hãy chọn ít nhất một người chịu tiền.");
       return;
     }
 
@@ -812,7 +812,7 @@ function ExpenseFormSheet({
       const roundedAmount = roundMoney(numericAmount);
       const roundedShared = roundMoney(manualTotal);
       if (roundedAmount !== roundedShared) {
-        setFormError("Tong so tien da chia phai bang tong hoa don.");
+        setFormError("Tổng số tiền đã chia phải bằng tổng hóa đơn.");
         return;
       }
     }
@@ -833,8 +833,8 @@ function ExpenseFormSheet({
       <section className="sheet-card" onClick={(event) => event.stopPropagation()}>
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">{initialExpense ? "Chinh sua" : "Them moi"}</p>
-            <h3>{initialExpense ? "Cap nhat khoan chi" : "Them khoan chi"}</h3>
+            <p className="eyebrow">{initialExpense ? "Chỉnh sửa" : "Thêm mới"}</p>
+            <h3>{initialExpense ? "Cập nhật khoản chi" : "Thêm khoản chi"}</h3>
           </div>
           <button className="icon-button" onClick={onClose} type="button">
             ×
@@ -843,28 +843,23 @@ function ExpenseFormSheet({
 
         <form className="sheet-form" onSubmit={handleSubmit}>
           <label>
-            Tong tien
+            Tổng tiền
             <input type="number" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} />
           </label>
 
           <label>
-            Mo ta
+            Mô tả
             <input value={description} onChange={(event) => setDescription(event.target.value)} />
-          </label>
-
-          <label>
-            Anh hoa don (URL)
-            <input value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} />
           </label>
 
           <div className="receipt-upload-card">
             <div className="receipt-upload-header">
               <div>
-                <strong>Chup hoac tai anh hoa don</strong>
-                <p>{uploadingImage ? "Dang tai anh len server..." : "Anh se duoc luu ngay tren server va gan vao khoan chi."}</p>
+                <strong>Chụp hoặc tải ảnh hóa đơn</strong>
+                <p>{uploadingImage ? "Đang tải ảnh lên server..." : "Ảnh sẽ được lưu ngay trên server và gắn vào khoản chi."}</p>
               </div>
               <button className="secondary-button" onClick={() => fileInputRef.current?.click()} type="button">
-                {uploadingImage ? "Dang tai..." : "Chon anh"}
+                {uploadingImage ? "Đang tải..." : "Chọn ảnh"}
               </button>
             </div>
             <input
@@ -877,29 +872,24 @@ function ExpenseFormSheet({
             />
             {imageUrl && (
               <div className="receipt-preview">
-                <img alt="Anh hoa don" src={imageUrl} />
+                <img alt="Ảnh hóa đơn" src={imageUrl} />
                 <a href={imageUrl} rel="noreferrer" target="_blank">
-                  Xem anh day du
+                  Xem ảnh đầy đủ
                 </a>
               </div>
             )}
           </div>
 
-          <label>
-            Ngay chi
-            <input type="date" value={expenseDate} onChange={(event) => setExpenseDate(event.target.value)} />
-          </label>
-
-          <label>
-            Nguoi thanh toan
-            <select value={payerId} onChange={(event) => setPayerId(Number(event.target.value))}>
-              {activeUsers.map((member) => (
-                <option key={member.id} value={member.id}>
-                  {member.fullName}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="readonly-grid">
+            <div className="readonly-field">
+              <span>Ngày chi</span>
+              <strong>{formatDate(expenseDate)}</strong>
+            </div>
+            <div className="readonly-field">
+              <span>Người thanh toán</span>
+              <strong>{activeUsers.find((member) => member.id === payerId)?.fullName || currentUser.fullName}</strong>
+            </div>
+          </div>
 
           <div className="split-toggle">
             <button
@@ -907,14 +897,14 @@ function ExpenseFormSheet({
               onClick={() => setSplitType("EQUAL")}
               type="button"
             >
-              Chia deu
+              Chia đều
             </button>
             <button
               className={splitType === "AMOUNT" ? "toggle-button active" : "toggle-button"}
               onClick={() => setSplitType("AMOUNT")}
               type="button"
             >
-              Chia theo so tien
+              Chia theo số tiền
             </button>
           </div>
 
@@ -971,11 +961,11 @@ function ExpenseFormSheet({
 
           <div className="summary-strip">
             <div>
-              <span>Tong hoa don</span>
+              <span>Tổng hóa đơn</span>
               <strong>{formatCurrency(numericAmount)}</strong>
             </div>
             <div>
-              <span>Tong da chia</span>
+              <span>Tổng đã chia</span>
               <strong>{formatCurrency(splitType === "EQUAL" ? equalPreview.reduce((sum, item) => sum + item, 0) : manualTotal)}</strong>
             </div>
           </div>
@@ -984,10 +974,10 @@ function ExpenseFormSheet({
 
           <div className="sheet-actions">
             <button className="secondary-button" onClick={onClose} type="button">
-              Dong
+              Đóng
             </button>
             <button className="primary-button" type="submit">
-              {initialExpense ? "Luu thay doi" : "Luu khoan chi"}
+              {initialExpense ? "Lưu thay đổi" : "Lưu khoản chi"}
             </button>
           </div>
         </form>
@@ -1022,15 +1012,18 @@ function ExpenseItem({
         <div>
           <strong>{expense.description}</strong>
           <p>
-            {expense.payerName} thanh toan · {formatDate(expense.expenseDate)}
+            {expense.payerName} thanh toán · {formatDate(expense.expenseDate)}
           </p>
           <p>{expense.shares.map((share) => `${share.fullName}: ${formatCurrency(share.shareAmount)}`).join(" · ")}</p>
           {expense.imageUrl && (
-            <p>
+            <>
+              <img className="expense-receipt-image" alt="Ảnh hóa đơn" src={expense.imageUrl} />
+              <p>
               <a href={expense.imageUrl} rel="noreferrer" target="_blank">
-                Xem anh hoa don
+                Xem ảnh hóa đơn
               </a>
-            </p>
+              </p>
+            </>
           )}
         </div>
         <strong className="expense-amount">{formatCurrency(expense.amount)}</strong>
@@ -1038,10 +1031,10 @@ function ExpenseItem({
       {!compact && (
         <div className="expense-actions">
           <button className="secondary-button" onClick={onEdit} type="button">
-            Sua
+            Sửa
           </button>
           <button className="secondary-button danger" onClick={onDelete} type="button">
-            Xoa
+            Xóa
           </button>
         </div>
       )}
@@ -1076,7 +1069,7 @@ function loadGoogleScript() {
     script.async = true;
     script.defer = true;
     script.onload = () => resolve();
-    script.onerror = () => reject(new Error("Khong tai duoc Google script"));
+    script.onerror = () => reject(new Error("Không tải được Google script"));
     document.head.appendChild(script);
   });
 }
@@ -1143,13 +1136,13 @@ function fallbackAvatar(name: string) {
 function tabTitle(tab: TabKey) {
   switch (tab) {
     case "home":
-      return "Trang chu";
+      return "Trang chủ";
     case "expenses":
-      return "Khoan chi";
+      return "Khoản chi";
     case "reports":
-      return "Bao cao";
+      return "Báo cáo";
     case "account":
-      return "Tai khoan";
+      return "Tài khoản";
     default:
       return "Family Expense";
   }
