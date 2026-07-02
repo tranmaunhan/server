@@ -241,6 +241,7 @@ button {
 }
 
 .compact-panel {
+  display: grid;
   gap: 14px;
 }
 

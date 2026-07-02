@@ -1,14 +1,22 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type TouchEvent } from "react";
+import { AccountTab } from "./components/app/AccountTab";
+import { AuthScreen } from "./components/app/AuthScreen";
+import { BottomNav } from "./components/app/BottomNav";
+import { ExpenseFormSheet } from "./components/app/ExpenseFormSheet";
+import { ExpensesTab } from "./components/app/ExpensesTab";
+import { HomeTab } from "./components/app/HomeTab";
+import { ReportsTab } from "./components/app/ReportsTab";
+import { StatusLayer } from "./components/app/StatusLayer";
+import { tabTitle, type TabKey } from "./components/app/nav";
 import { ApiClient } from "./lib/api";
 import { getAppConfig } from "./lib/config";
 import { compressImageForUpload } from "./lib/image";
+import { fallbackAvatar } from "./lib/ui";
 import { clearToken, clearUser, getToken, getUser, saveToken, saveUser } from "./lib/storage";
 import type {
   DashboardResponse,
   Expense,
   ExpensePayload,
-  ExpenseShareInput,
-  ExpenseSplitType,
   MonthlyReport,
   Settlement,
   SettlementStatus,
@@ -17,22 +25,13 @@ import type {
   UserRole
 } from "./types";
 
-type TabKey = "home" | "expenses" | "reports" | "account";
-
 const GOOGLE_SCRIPT_ID = "google-identity-services";
 const PULL_REFRESH_THRESHOLD = 84;
 const PULL_REFRESH_MAX = 132;
 const PULL_REFRESH_HOLD = 68;
+
 const config = getAppConfig();
 const api = new ApiClient(config.apiBaseUrl, () => getToken());
-const NAV_ITEMS: Array<{ key: TabKey; label: string; icon: NavIconKey }> = [
-  { key: "home", label: "Trang chủ", icon: "home" },
-  { key: "expenses", label: "Khoản chi", icon: "receipt" },
-  { key: "reports", label: "Báo cáo", icon: "chart" },
-  { key: "account", label: "Tài khoản", icon: "user" }
-];
-
-type NavIconKey = "home" | "receipt" | "chart" | "user";
 
 export default function App() {
   const today = new Date();
@@ -74,16 +73,16 @@ export default function App() {
   useEffect(() => {
     if (!config.googleClientId) {
       console.warn("[auth] missing Google client id in runtime config", {
-        origin: window.location.origin,
-        apiBaseUrl: config.apiBaseUrl
+        apiBaseUrl: config.apiBaseUrl,
+        origin: window.location.origin
       });
       return;
     }
 
     console.info("[auth] runtime config loaded", {
-      origin: window.location.origin,
       apiBaseUrl: config.apiBaseUrl,
-      googleClientIdPreview: maskValue(config.googleClientId)
+      googleClientIdPreview: maskValue(config.googleClientId),
+      origin: window.location.origin
     });
 
     let cancelled = false;
@@ -116,6 +115,7 @@ export default function App() {
           setError("Google không trả về token đăng nhập.");
           return;
         }
+
         console.info("[auth] received Google credential", summarizeGoogleCredential(response.credential));
         await handleGoogleLogin(response.credential);
       }
@@ -123,17 +123,41 @@ export default function App() {
 
     googleButtonRef.current.innerHTML = "";
     window.google.accounts.id.renderButton(googleButtonRef.current, {
-      theme: "filled_blue",
-      size: "large",
-      type: "standard",
-      shape: "pill",
-      text: "continue_with",
+      locale: "vi",
       logo_alignment: "left",
-      width: 320,
-      locale: "vi"
+      shape: "pill",
+      size: "large",
+      text: "continue_with",
+      theme: "filled_blue",
+      type: "standard",
+      width: 320
     });
     buttonRenderedRef.current = true;
   }, [googleReady, user]);
+
+  useEffect(() => {
+    if (!message) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setMessage("");
+    }, 3200);
+
+    return () => window.clearTimeout(timeout);
+  }, [message]);
+
+  useEffect(() => {
+    if (!error) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setError("");
+    }, 4200);
+
+    return () => window.clearTimeout(timeout);
+  }, [error]);
 
   function updatePullDistance(nextDistance: number) {
     pullDistanceRef.current = nextDistance;
@@ -196,6 +220,7 @@ export default function App() {
   async function refreshPeriodData(nextYear: number, nextMonth: number) {
     setLoading(true);
     setError("");
+
     try {
       const [reportData, settlementList] = await Promise.all([
         api.getMonthlyReport(nextYear, nextMonth),
@@ -221,6 +246,7 @@ export default function App() {
         api.getExpenses()
       ]);
       const nextAdminUsers = await adminUsersPromise;
+
       setUsers(memberList);
       setAdminUsers(nextAdminUsers);
       setDashboard(dashboardData);
@@ -249,7 +275,7 @@ export default function App() {
     }
   }
 
-  function handleAppTouchStart(event: React.TouchEvent<HTMLElement>) {
+  function handleAppTouchStart(event: TouchEvent<HTMLElement>) {
     if (!canStartPullRefresh()) {
       resetPullState();
       return;
@@ -259,7 +285,7 @@ export default function App() {
     pullActiveRef.current = false;
   }
 
-  function handleAppTouchMove(event: React.TouchEvent<HTMLElement>) {
+  function handleAppTouchMove(event: TouchEvent<HTMLElement>) {
     if (pullStartYRef.current == null || showExpenseForm || pullRefreshing) {
       return;
     }
@@ -313,8 +339,8 @@ export default function App() {
     try {
       console.info("[auth] sending Google credential to backend", {
         apiBaseUrl: config.apiBaseUrl,
-        loginUrl: `${config.apiBaseUrl}/auth/google`,
-        credential: summarizeGoogleCredential(credential)
+        credential: summarizeGoogleCredential(credential),
+        loginUrl: `${config.apiBaseUrl}/auth/google`
       });
       const response = await api.loginWithGoogle(credential);
       saveToken(response.accessToken);
@@ -353,9 +379,9 @@ export default function App() {
     console.info("[expense] upload receipt image", {
       originalName: file.name,
       originalSize: file.size,
+      type: uploadFile.type,
       uploadName: uploadFile.name,
-      uploadSize: uploadFile.size,
-      type: uploadFile.type
+      uploadSize: uploadFile.size
     });
     const response = await api.uploadExpenseImage(uploadFile);
     setMessage("Đã tải ảnh hóa đơn lên server.");
@@ -423,6 +449,11 @@ export default function App() {
     setShowExpenseForm(true);
   }
 
+  function closeExpenseForm() {
+    setShowExpenseForm(false);
+    setEditingExpense(null);
+  }
+
   function logout() {
     clearToken();
     clearUser();
@@ -443,35 +474,23 @@ export default function App() {
   }
 
   const pullProgress = Math.min(pullDistance / PULL_REFRESH_THRESHOLD, 1);
-  const pullOffset = pullDistance > 0 || pullRefreshing ? Math.max(pullDistance, pullRefreshing ? PULL_REFRESH_HOLD : 0) : 0;
+  const pullOffset =
+    pullDistance > 0 || pullRefreshing ? Math.max(pullDistance, pullRefreshing ? PULL_REFRESH_HOLD : 0) : 0;
   const pullLabel = pullRefreshing
     ? "Đang làm mới dữ liệu..."
     : pullDistance >= PULL_REFRESH_THRESHOLD
       ? "Thả tay để làm mới"
       : "Kéo xuống để làm mới";
 
-  const hasStatus = loading || Boolean(message) || Boolean(error);
-
   if (!user) {
     return (
-      <main className="auth-shell">
-        <section className="auth-card">
-          <div className="brand-mark">₫</div>
-          <p className="eyebrow">Family Expense PWA</p>
-          <h1>Quản lý chi tiêu gia đình trong một chạm</h1>
-          <p className="lead">
-            Đăng nhập bằng Google, backend sẽ tạo JWT riêng cho hệ thống và frontend sử dụng Bearer Token cho toàn bộ API.
-          </p>
-          {config.googleClientId ? (
-            <div className="google-login-box" ref={googleButtonRef} />
-          ) : (
-            <p className="warning-text">Chưa cấu hình `VITE_GOOGLE_CLIENT_ID`.</p>
-          )}
-          {authenticating && <p className="helper-text">Đang xác thực...</p>}
-          {message && <p className="helper-text">{message}</p>}
-          {error && <p className="error-text">{error}</p>}
-        </section>
-      </main>
+      <AuthScreen
+        authenticating={authenticating}
+        error={error}
+        googleButtonRef={googleButtonRef}
+        googleClientId={config.googleClientId}
+        message={message}
+      />
     );
   }
 
@@ -494,13 +513,7 @@ export default function App() {
         <strong>{pullLabel}</strong>
       </div>
 
-      {hasStatus && (
-        <div className="status-layer" role="status" aria-live="polite">
-          {loading && <div className="status-banner">Đang tải dữ liệu...</div>}
-          {message && <div className="status-banner success">{message}</div>}
-          {error && <div className="status-banner error">{error}</div>}
-        </div>
-      )}
+      <StatusLayer error={error} loading={loading} message={message} />
 
       <div className="pull-refresh-shell" style={{ transform: `translateY(${pullOffset}px)` }}>
         <header className="topbar">
@@ -514,43 +527,37 @@ export default function App() {
         </header>
 
         <section className="screen-content">
-          {activeTab === "home" && (
-            <HomeTab
-              user={user}
-              dashboard={dashboard}
-              onAddExpense={openCreateExpense}
-            />
-          )}
+          {activeTab === "home" && <HomeTab dashboard={dashboard} onAddExpense={openCreateExpense} user={user} />}
 
           {activeTab === "expenses" && (
             <ExpensesTab
               currentUser={user}
               expenses={expenses}
               onCreate={openCreateExpense}
-              onEdit={openEditExpense}
               onDelete={handleDeleteExpense}
+              onEdit={openEditExpense}
             />
           )}
 
           {activeTab === "reports" && (
             <ReportsTab
+              month={month}
+              onGenerateSettlements={handleGenerateSettlements}
+              onPeriodChange={refreshPeriodData}
+              onSettlementStatus={handleSettlementStatus}
               report={report}
               settlements={settlements}
-              month={month}
               year={year}
-              onPeriodChange={refreshPeriodData}
-              onGenerateSettlements={handleGenerateSettlements}
-              onSettlementStatus={handleSettlementStatus}
             />
           )}
 
           {activeTab === "account" && (
             <AccountTab
               currentUser={user}
-              users={adminUsers}
               onLogout={logout}
               onUserRoleChange={handleUserRoleChange}
               onUserStatusChange={handleUserStatusChange}
+              users={adminUsers}
             />
           )}
         </section>
@@ -560,706 +567,19 @@ export default function App() {
         +
       </button>
 
-      <nav className="bottom-nav" aria-label="Điều hướng chính">
-        {NAV_ITEMS.map((item) => (
-          <button
-            key={item.key}
-            className={activeTab === item.key ? "bottom-nav-item active" : "bottom-nav-item"}
-            aria-label={item.label}
-            onClick={() => setActiveTab(item.key as TabKey)}
-            title={item.label}
-            type="button"
-          >
-            <AppIcon name={item.icon} />
-            <span className="sr-only">{item.label}</span>
-          </button>
-        ))}
-      </nav>
+      <BottomNav activeTab={activeTab} onSelect={setActiveTab} />
 
       {showExpenseForm && (
         <ExpenseFormSheet
           currentUser={user}
-          users={users}
           initialExpense={editingExpense}
-          onUploadImage={handleUploadExpenseImage}
-          onClose={() => {
-            setShowExpenseForm(false);
-            setEditingExpense(null);
-          }}
+          onClose={closeExpenseForm}
           onSave={handleSaveExpense}
+          onUploadImage={handleUploadExpenseImage}
+          users={users}
         />
       )}
     </main>
-  );
-}
-
-function HomeTab({
-  user,
-  dashboard,
-  onAddExpense
-}: {
-  user: User;
-  dashboard: DashboardResponse | null;
-  onAddExpense: () => void;
-}) {
-  return (
-    <div className="tab-stack">
-      <section className="hero-card home-hero-card">
-        <div className="hero-row">
-          <div className="hero-copy">
-            <p className="hero-subtitle">Xin chào, {user.fullName}</p>
-            <h2>Thêm khoản chi trong dưới 20 giây</h2>
-            <p>
-              Người thanh toán được lấy từ tài khoản đăng nhập, backend sẽ tự tính số tiền từng thành viên phải chịu.
-            </p>
-          </div>
-          <img className="hero-avatar" alt={user.fullName} src={user.avatarUrl || fallbackAvatar(user.fullName)} />
-        </div>
-        <button className="primary-button" onClick={onAddExpense} type="button">
-          Thêm khoản chi mới
-        </button>
-      </section>
-
-      <section className="metrics-grid">
-        <MetricCard label="Tổng chi tháng này" value={formatCurrency(dashboard?.monthTotal || 0)} />
-        <MetricCard label="Chi hôm nay" value={formatCurrency(dashboard?.todayTotal || 0)} />
-        <MetricCard label="Số khoản chi tháng này" value={String(dashboard?.monthExpenseCount || 0)} />
-        <MetricCard
-          label="Người thanh toán nhiều nhất"
-          value={dashboard?.topPayerName ? `${dashboard.topPayerName} · ${formatCurrency(dashboard.topPayerAmount)}` : "Chưa có"}
-        />
-      </section>
-
-      <section className="panel-card compact-panel">
-        <div className="panel-heading compact-heading">
-          <div>
-            <p className="eyebrow">Gần đây</p>
-            <h3>Khoản chi mới nhất</h3>
-          </div>
-        </div>
-        <div className="list-stack">
-          {(dashboard?.recentExpenses || []).map((expense) => (
-            <ExpenseItem key={expense.id} expense={expense} compact />
-          ))}
-          {!dashboard?.recentExpenses?.length && <p className="muted-text">Chưa có khoản chi nào trong tháng này.</p>}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function ExpensesTab({
-  currentUser,
-  expenses,
-  onCreate,
-  onEdit,
-  onDelete
-}: {
-  currentUser: User;
-  expenses: Expense[];
-  onCreate: () => void;
-  onEdit: (expense: Expense) => void;
-  onDelete: (expenseId: number) => void;
-}) {
-  return (
-    <div className="tab-stack">
-      <section className="panel-card compact-panel">
-        <div className="panel-heading compact-heading">
-          <div>
-            <p className="eyebrow">Dòng thời gian</p>
-            <h3>Danh sách khoản chi</h3>
-          </div>
-          <button className="secondary-button" onClick={onCreate} type="button">
-            Thêm mới
-          </button>
-        </div>
-
-        <div className="list-stack">
-          {expenses.map((expense) => (
-            <ExpenseItem
-              key={expense.id}
-              canManage={expense.createdById === currentUser.id}
-              expense={expense}
-              onEdit={() => onEdit(expense)}
-              onDelete={() => onDelete(expense.id)}
-            />
-          ))}
-          {!expenses.length && <p className="muted-text">Chưa có dữ liệu khoản chi.</p>}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function ReportsTab({
-  report,
-  settlements,
-  month,
-  year,
-  onPeriodChange,
-  onGenerateSettlements,
-  onSettlementStatus
-}: {
-  report: MonthlyReport | null;
-  settlements: Settlement[];
-  month: number;
-  year: number;
-  onPeriodChange: (year: number, month: number) => void;
-  onGenerateSettlements: () => void;
-  onSettlementStatus: (settlementId: number, status: SettlementStatus) => void;
-}) {
-  return (
-    <div className="tab-stack">
-      <section className="panel-card compact-panel">
-        <div className="panel-heading compact-heading">
-          <div>
-            <p className="eyebrow">Báo cáo tháng</p>
-            <h3>Tổng hợp thanh toán và phân bổ chi phí</h3>
-          </div>
-          <div className="period-controls">
-            <select value={month} onChange={(event) => onPeriodChange(year, Number(event.target.value))}>
-              {Array.from({ length: 12 }, (_, index) => index + 1).map((item) => (
-                <option key={item} value={item}>
-                  Tháng {item}
-                </option>
-              ))}
-            </select>
-            <input type="number" value={year} onChange={(event) => onPeriodChange(Number(event.target.value), month)} />
-          </div>
-        </div>
-
-        <div className="metrics-grid">
-          <MetricCard label="Tổng đã chi" value={formatCurrency(report?.totalExpenseAmount || 0)} />
-          <MetricCard label="Tổng số khoản chi" value={String(report?.totalExpenseCount || 0)} />
-        </div>
-
-        <div className="list-stack">
-          {report?.members.map((member) => (
-            <article className="member-balance-card" key={member.userId}>
-              <div className="member-balance-main">
-                <strong>{member.fullName}</strong>
-                <div className="inline-meta">
-                  <p>Đã thanh toán: {formatCurrency(member.paidAmount)}</p>
-                  <p>Phải chịu: {formatCurrency(member.shareAmount)}</p>
-                </div>
-              </div>
-              <span className={member.balance >= 0 ? "balance-pill positive" : "balance-pill negative"}>
-                {member.balance >= 0 ? "+" : ""}
-                {formatCurrency(member.balance)}
-              </span>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="panel-card compact-panel">
-        <div className="panel-heading compact-heading">
-          <div>
-            <p className="eyebrow">Gợi ý chuyển tiền</p>
-            <h3>Kết quả quyết toán cuối tháng</h3>
-          </div>
-          <button className="secondary-button" onClick={onGenerateSettlements} type="button">
-            Tạo quyết toán
-          </button>
-        </div>
-
-        <div className="list-stack">
-          {report?.suggestions.map((item, index) => (
-            <article className="settlement-suggestion-card" key={`${item.fromUserId}-${item.toUserId}-${index}`}>
-              <strong>{item.fromUserName}</strong>
-              <span>chuyển</span>
-              <strong>{formatCurrency(item.amount)}</strong>
-              <span>cho</span>
-              <strong>{item.toUserName}</strong>
-            </article>
-          ))}
-          {!report?.suggestions?.length && <p className="muted-text">Tháng này chưa cần tạo quyết toán.</p>}
-        </div>
-      </section>
-
-      <section className="panel-card compact-panel">
-        <div className="panel-heading compact-heading">
-          <div>
-            <p className="eyebrow">Danh sách quyết toán</p>
-            <h3>Theo dõi trạng thái thanh toán</h3>
-          </div>
-        </div>
-
-        <div className="list-stack">
-          {settlements.map((settlement) => (
-            <article className="settlement-card" key={settlement.id}>
-              <div className="settlement-main">
-                <strong>
-                  {settlement.fromUserName} → {settlement.toUserName}
-                </strong>
-                <p className="settlement-amount-text">{formatCurrency(settlement.amount)}</p>
-              </div>
-              <button
-                className={settlement.status === "PAID" ? "secondary-button paid" : "secondary-button"}
-                onClick={() =>
-                  onSettlementStatus(settlement.id, settlement.status === "PAID" ? "PENDING" : "PAID")
-                }
-                type="button"
-              >
-                {settlement.status === "PAID" ? "Đã thanh toán" : "Chờ thanh toán"}
-              </button>
-            </article>
-          ))}
-          {!settlements.length && <p className="muted-text">Chưa có bản ghi quyết toán nào.</p>}
-        </div>
-      </section>
-    </div>
-  );
-}
-
-function AccountTab({
-  currentUser,
-  users,
-  onLogout,
-  onUserRoleChange,
-  onUserStatusChange
-}: {
-  currentUser: User;
-  users: UserOption[];
-  onLogout: () => void;
-  onUserRoleChange: (userId: number, role: UserRole) => void;
-  onUserStatusChange: (userId: number, active: boolean) => void;
-}) {
-  return (
-    <div className="tab-stack">
-      <section className="panel-card account-panel">
-        <div className="account-header">
-          <img alt={currentUser.fullName} src={currentUser.avatarUrl || fallbackAvatar(currentUser.fullName)} />
-          <div className="account-meta">
-            <h3>{currentUser.fullName}</h3>
-            <p>{currentUser.email}</p>
-          </div>
-        </div>
-        <div className="account-stats">
-          <div className="account-stat">
-            <span>Vai trò</span>
-            <strong>{currentUser.role}</strong>
-          </div>
-          <div className="account-stat">
-            <span>Trạng thái</span>
-            <strong>{currentUser.active ? "Đang hoạt động" : "Đã bị khóa"}</strong>
-          </div>
-        </div>
-        <button className="secondary-button danger full-width" onClick={onLogout} type="button">
-          Đăng xuất
-        </button>
-      </section>
-
-      {currentUser.role === "ADMIN" && (
-        <section className="panel-card">
-          <div className="panel-heading">
-            <div>
-              <p className="eyebrow">Quản lý thành viên</p>
-              <h3>Admin panel</h3>
-              <p className="muted-text">Danh sách này bao gồm cả tài khoản đang hoạt động và tài khoản đã bị khóa.</p>
-            </div>
-          </div>
-          <div className="list-stack">
-            {users.map((member) => (
-              <article className="member-admin-card" key={member.id}>
-                <div className="member-admin-info">
-                  <strong>{member.fullName}</strong>
-                  <p>{member.email}</p>
-                  <span className={member.active ? "member-status active" : "member-status inactive"}>
-                    {member.active ? "Đang hoạt động" : "Đã bị khóa"}
-                  </span>
-                </div>
-                <div className="member-actions">
-                  <select
-                    value={member.role}
-                    onChange={(event) => onUserRoleChange(member.id, event.target.value as UserRole)}
-                  >
-                    <option value="ADMIN">ADMIN</option>
-                    <option value="MEMBER">MEMBER</option>
-                  </select>
-                  <button
-                    className={member.active ? "secondary-button" : "secondary-button danger"}
-                    onClick={() => onUserStatusChange(member.id, !member.active)}
-                    type="button"
-                  >
-                    {member.active ? "Khóa" : "Mở khóa"}
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-      )}
-    </div>
-  );
-}
-
-function ExpenseFormSheet({
-  currentUser,
-  users,
-  initialExpense,
-  onUploadImage,
-  onClose,
-  onSave
-}: {
-  currentUser: User;
-  users: UserOption[];
-  initialExpense: Expense | null;
-  onUploadImage: (file: File) => Promise<string>;
-  onClose: () => void;
-  onSave: (payload: ExpensePayload) => Promise<void>;
-}) {
-  const activeUsers = users.filter((item) => item.active);
-  const initialSelectedIds = initialExpense
-    ? initialExpense.shares.map((share) => share.userId)
-    : activeUsers.slice(0, Math.min(activeUsers.length, 3)).map((item) => item.id);
-
-  const [amount, setAmount] = useState<string>(initialExpense ? String(initialExpense.amount) : "");
-  const [description, setDescription] = useState<string>(initialExpense?.description || "");
-  const [imageUrl, setImageUrl] = useState<string>(initialExpense?.imageUrl || "");
-  const expenseDate = initialExpense?.expenseDate || formatDateInput(new Date());
-  const payerId = initialExpense?.payerId || currentUser.id || activeUsers[0]?.id || 0;
-  const [splitType, setSplitType] = useState<ExpenseSplitType>(initialExpense?.splitType || "EQUAL");
-  const [selectedIds, setSelectedIds] = useState<number[]>(initialSelectedIds);
-  const [manualShares, setManualShares] = useState<Record<number, string>>(() => {
-    const values: Record<number, string> = {};
-    if (initialExpense) {
-      initialExpense.shares.forEach((share) => {
-        values[share.userId] = String(share.shareAmount);
-      });
-    }
-    return values;
-  });
-  const [formError, setFormError] = useState("");
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const numericAmount = Number(amount || 0);
-  const equalPreview = calculateEqualSplit(numericAmount, selectedIds.length);
-  const manualTotal = selectedIds.reduce((sum, userId) => sum + Number(manualShares[userId] || 0), 0);
-
-  function toggleUser(userId: number) {
-    setSelectedIds((current) => {
-      if (current.includes(userId)) {
-        return current.filter((id) => id !== userId);
-      }
-      return [...current, userId];
-    });
-  }
-
-  async function handleImagePick(event: React.ChangeEvent<HTMLInputElement>) {
-    const selectedFile = event.target.files?.[0];
-    if (!selectedFile) {
-      return;
-    }
-
-    setFormError("");
-    setUploadingImage(true);
-
-    try {
-      const nextImageUrl = await onUploadImage(selectedFile);
-      setImageUrl(nextImageUrl);
-    } catch (uploadError) {
-      setFormError(uploadError instanceof Error ? uploadError.message : "Không tải được ảnh hóa đơn.");
-    } finally {
-      setUploadingImage(false);
-      event.target.value = "";
-    }
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setFormError("");
-
-    if (!numericAmount || numericAmount <= 0) {
-      setFormError("Tổng tiền phải lớn hơn 0.");
-      return;
-    }
-
-    if (!selectedIds.length) {
-      setFormError("Hãy chọn ít nhất một người chịu tiền.");
-      return;
-    }
-
-    let shares: ExpenseShareInput[] = [];
-    if (splitType === "EQUAL") {
-      shares = selectedIds.map((userId, index) => ({
-        userId,
-        shareAmount: equalPreview[index]
-      }));
-    } else {
-      shares = selectedIds.map((userId) => ({
-        userId,
-        shareAmount: Number(manualShares[userId] || 0)
-      }));
-
-      const roundedAmount = roundMoney(numericAmount);
-      const roundedShared = roundMoney(manualTotal);
-      if (roundedAmount !== roundedShared) {
-        setFormError("Tổng số tiền đã chia phải bằng tổng hóa đơn.");
-        return;
-      }
-    }
-
-    await onSave({
-      payerId,
-      amount: roundMoney(numericAmount),
-      description,
-      imageUrl,
-      expenseDate,
-      splitType,
-      shares
-    });
-  }
-
-  return (
-    <div className="sheet-backdrop" onClick={onClose}>
-      <section className="sheet-card" onClick={(event) => event.stopPropagation()}>
-        <div className="panel-heading">
-          <div>
-            <p className="eyebrow">{initialExpense ? "Chỉnh sửa" : "Thêm mới"}</p>
-            <h3>{initialExpense ? "Cập nhật khoản chi" : "Thêm khoản chi"}</h3>
-          </div>
-          <button className="icon-button" onClick={onClose} type="button">
-            ×
-          </button>
-        </div>
-
-        <form className="sheet-form" onSubmit={handleSubmit}>
-          <label>
-            Tổng tiền
-            <input type="number" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} />
-          </label>
-
-          <label>
-            Mô tả
-            <input value={description} onChange={(event) => setDescription(event.target.value)} />
-          </label>
-
-          <div className="receipt-upload-card">
-            <div className="receipt-upload-header">
-              <div>
-                <strong>Chụp hoặc tải ảnh hóa đơn</strong>
-                <p>{uploadingImage ? "Đang tải ảnh lên server..." : "Ảnh sẽ được lưu ngay trên server và gắn vào khoản chi."}</p>
-              </div>
-              <button className="secondary-button" onClick={() => fileInputRef.current?.click()} type="button">
-                {uploadingImage ? "Đang tải..." : "Chọn ảnh"}
-              </button>
-            </div>
-            <input
-              ref={fileInputRef}
-              accept="image/*"
-              capture="environment"
-              hidden
-              onChange={handleImagePick}
-              type="file"
-            />
-            {imageUrl && (
-              <div className="receipt-preview">
-                <img alt="Ảnh hóa đơn" src={imageUrl} />
-                <a href={imageUrl} rel="noreferrer" target="_blank">
-                  Xem ảnh đầy đủ
-                </a>
-              </div>
-            )}
-          </div>
-
-          <div className="readonly-grid">
-            <div className="readonly-field">
-              <span>Ngày chi</span>
-              <strong>{formatDate(expenseDate)}</strong>
-            </div>
-            <div className="readonly-field">
-              <span>Người thanh toán</span>
-              <strong>{activeUsers.find((member) => member.id === payerId)?.fullName || currentUser.fullName}</strong>
-            </div>
-          </div>
-
-          <div className="split-toggle">
-            <button
-              className={splitType === "EQUAL" ? "toggle-button active" : "toggle-button"}
-              onClick={() => setSplitType("EQUAL")}
-              type="button"
-            >
-              Chia đều
-            </button>
-            <button
-              className={splitType === "AMOUNT" ? "toggle-button active" : "toggle-button"}
-              onClick={() => setSplitType("AMOUNT")}
-              type="button"
-            >
-              Chia theo số tiền
-            </button>
-          </div>
-
-          <div className="member-selector">
-            {activeUsers.map((member) => (
-              <button
-                key={member.id}
-                className={selectedIds.includes(member.id) ? "member-chip active" : "member-chip"}
-                onClick={() => toggleUser(member.id)}
-                type="button"
-              >
-                {member.fullName}
-              </button>
-            ))}
-          </div>
-
-          {splitType === "AMOUNT" ? (
-            <div className="share-grid">
-              {selectedIds.map((userId) => {
-                const member = activeUsers.find((item) => item.id === userId);
-                if (!member) return null;
-                return (
-                  <label key={userId}>
-                    {member.fullName}
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={manualShares[userId] || ""}
-                      onChange={(event) =>
-                        setManualShares((current) => ({
-                          ...current,
-                          [userId]: event.target.value
-                        }))
-                      }
-                    />
-                  </label>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="preview-grid">
-              {selectedIds.map((userId, index) => {
-                const member = activeUsers.find((item) => item.id === userId);
-                if (!member) return null;
-                return (
-                  <div className="preview-row" key={userId}>
-                    <span>{member.fullName}</span>
-                    <strong>{formatCurrency(equalPreview[index] || 0)}</strong>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="summary-strip">
-            <div>
-              <span>Tổng hóa đơn</span>
-              <strong>{formatCurrency(numericAmount)}</strong>
-            </div>
-            <div>
-              <span>Tổng đã chia</span>
-              <strong>{formatCurrency(splitType === "EQUAL" ? equalPreview.reduce((sum, item) => sum + item, 0) : manualTotal)}</strong>
-            </div>
-          </div>
-
-          {formError && <p className="error-text">{formError}</p>}
-
-          <div className="sheet-actions">
-            <button className="secondary-button" onClick={onClose} type="button">
-              Đóng
-            </button>
-            <button className="primary-button" type="submit">
-              {initialExpense ? "Lưu thay đổi" : "Lưu khoản chi"}
-            </button>
-          </div>
-        </form>
-      </section>
-    </div>
-  );
-}
-
-function MetricCard({ label, value }: { label: string; value: string }) {
-  return (
-    <article className="metric-card">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </article>
-  );
-}
-
-function AppIcon({ name }: { name: NavIconKey }) {
-  switch (name) {
-    case "home":
-      return (
-        <svg aria-hidden="true" className="nav-icon" viewBox="0 0 24 24">
-          <path d="M4 11.5 12 5l8 6.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.9" />
-          <path d="M6.5 10.5V19h11v-8.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.9" />
-        </svg>
-      );
-    case "receipt":
-      return (
-        <svg aria-hidden="true" className="nav-icon" viewBox="0 0 24 24">
-          <path d="M7 4.5h10v15l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4V4.5Z" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.9" />
-          <path d="M9 9h6M9 12.5h6M9 16h4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.9" />
-        </svg>
-      );
-    case "chart":
-      return (
-        <svg aria-hidden="true" className="nav-icon" viewBox="0 0 24 24">
-          <path d="M5 19.5h14" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.9" />
-          <path d="M8 17V11m4 6V7m4 10v-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.9" />
-        </svg>
-      );
-    case "user":
-      return (
-        <svg aria-hidden="true" className="nav-icon" viewBox="0 0 24 24">
-          <path d="M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" strokeWidth="1.9" />
-          <path d="M5.5 19a6.5 6.5 0 0 1 13 0" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.9" />
-        </svg>
-      );
-    default:
-      return null;
-  }
-}
-
-function ExpenseItem({
-  expense,
-  canManage,
-  compact,
-  onEdit,
-  onDelete
-}: {
-  expense: Expense;
-  canManage?: boolean;
-  compact?: boolean;
-  onEdit?: () => void;
-  onDelete?: () => void;
-}) {
-  return (
-    <article className="expense-card">
-      <div className="expense-main">
-        <div>
-          <strong>{expense.description}</strong>
-          <p>
-            {expense.payerName} thanh toán · {formatDate(expense.expenseDate)}
-          </p>
-          <p>{expense.shares.map((share) => `${share.fullName}: ${formatCurrency(share.shareAmount)}`).join(" · ")}</p>
-          {expense.imageUrl && (
-            <>
-              <img className="expense-receipt-image" alt="Ảnh hóa đơn" src={expense.imageUrl} />
-              <p>
-                <a href={expense.imageUrl} rel="noreferrer" target="_blank">
-                  Xem ảnh hóa đơn
-                </a>
-              </p>
-            </>
-          )}
-        </div>
-        <strong className="expense-amount">{formatCurrency(expense.amount)}</strong>
-      </div>
-      {!compact && canManage && (
-        <div className="expense-actions">
-          <button className="secondary-button" onClick={onEdit} type="button">
-            Sửa
-          </button>
-          <button className="secondary-button danger" onClick={onDelete} type="button">
-            Xóa
-          </button>
-        </div>
-      )}
-    </article>
   );
 }
 
@@ -1268,6 +588,7 @@ function parseStoredUser(): User | null {
   if (!raw) {
     return null;
   }
+
   try {
     return JSON.parse(raw) as User;
   } catch {
@@ -1298,12 +619,12 @@ function loadGoogleScript() {
 function summarizeGoogleCredential(credential: string) {
   const payload = parseJwtPayload(credential);
   return {
-    length: credential.length,
     aud: payload?.aud ?? null,
-    iss: payload?.iss ?? null,
     email: payload?.email ?? null,
-    sub: maskValue(payload?.sub),
-    exp: payload?.exp ?? null
+    exp: payload?.exp ?? null,
+    iss: payload?.iss ?? null,
+    length: credential.length,
+    sub: maskValue(payload?.sub)
   };
 }
 
@@ -1333,78 +654,4 @@ function maskValue(value: unknown) {
   }
 
   return `${value.slice(0, 4)}...${value.slice(-4)}`;
-}
-
-function fallbackAvatar(name: string) {
-  const initials = name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() || "")
-    .join("");
-
-  const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
-      <rect width="96" height="96" rx="48" fill="#d8efe7" />
-      <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#0f4d43">
-        ${initials || "U"}
-      </text>
-    </svg>
-  `;
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
-}
-
-function tabTitle(tab: TabKey) {
-  switch (tab) {
-    case "home":
-      return "Trang chủ";
-    case "expenses":
-      return "Khoản chi";
-    case "reports":
-      return "Báo cáo";
-    case "account":
-      return "Tài khoản";
-    default:
-      return "Family Expense";
-  }
-}
-
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: "VND",
-    maximumFractionDigits: 0
-  }).format(Number(value || 0));
-}
-
-function formatDate(value: string) {
-  return new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium" }).format(new Date(value));
-}
-
-function formatDateInput(date: Date) {
-  const nextYear = date.getFullYear();
-  const nextMonth = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${nextYear}-${nextMonth}-${day}`;
-}
-
-function roundMoney(value: number) {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
-}
-
-function calculateEqualSplit(total: number, count: number) {
-  if (!total || !count) {
-    return [];
-  }
-  const base = Math.floor((total * 100) / count) / 100;
-  const shares = Array.from({ length: count }, () => base);
-  const assigned = roundMoney(base * count);
-  let remainderCents = Math.round((roundMoney(total) - assigned) * 100);
-  let index = 0;
-  while (remainderCents > 0) {
-    shares[index] = roundMoney(shares[index] + 0.01);
-    remainderCents -= 1;
-    index = (index + 1) % count;
-  }
-  return shares;
 }
