@@ -22,6 +22,8 @@ services:
     image: postgres:16-alpine
     container_name: postgres
     restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT_BIND:-0.0.0.0:5432}:5432"
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-sampledb}
       POSTGRES_USER: ${POSTGRES_USER:-sample}
@@ -37,15 +39,14 @@ services:
       - app
 
   spring-api:
-    image: ${SPRING_API_IMAGE:-sample-spring-api:dev}
-    build:
-      context: ./sample-api
+    image: ${SPRING_API_IMAGE:-your-dockerhub-user/sample-spring-api:latest}
     container_name: spring-api
     restart: unless-stopped
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sampledb}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-sample}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-samplepass}
+      APP_JWT_SECRET: ${APP_JWT_SECRET}
       APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:18080,http://127.0.0.1:18080}
       GOOGLE_ALLOWED_CLIENT_IDS: ${GOOGLE_ALLOWED_CLIENT_IDS:-}
     depends_on:
@@ -58,15 +59,14 @@ services:
       retries: 6
     networks:
       - app
+      - web
 
   react-web:
-    image: ${REACT_WEB_IMAGE:-sample-react-web:dev}
-    build:
-      context: ./sample-web
+    image: ${REACT_WEB_IMAGE:-your-dockerhub-user/sample-react-web:latest}
     container_name: react-web
     restart: unless-stopped
     environment:
-      VITE_APP_NAME: ${VITE_APP_NAME:-Sổ Chi Tiêu}
+      VITE_APP_NAME: ${VITE_APP_NAME:-Family Expense PWA}
       VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
       VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
     depends_on:
@@ -74,6 +74,7 @@ services:
         condition: service_started
     networks:
       - app
+      - web
 
   deploy-manager:
     image: ${DEPLOY_MANAGER_IMAGE:-your-dockerhub-user/deploy-manager:latest}
@@ -91,7 +92,7 @@ services:
       COMPOSE_PROJECT_DIR: ${COMPOSE_PROJECT_DIR:-/workspace}
       COMPOSE_FILE_PATH: ${COMPOSE_FILE_PATH:-/workspace/docker-compose.yml}
       COMPOSE_ENV_FILE: ${COMPOSE_ENV_FILE:-/workspace/.env}
-      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-}
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-docker}
       NGINX_GENERATED_CONFIG: /workspace/nginx/conf.d/zz-generated-routes.conf
       NGINX_CONTAINER_NAME: nginx-gateway
       NGINX_MANAGEMENT_ENABLED: "true"

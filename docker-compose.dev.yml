@@ -1,4 +1,14 @@
 services:
+  spring-api:
+    build:
+      context: ./sample-api
+    image: sample-spring-api:dev
+
+  react-web:
+    build:
+      context: ./sample-web
+    image: sample-react-web:dev
+
   deploy-manager:
     build:
       context: ./deploy-manager

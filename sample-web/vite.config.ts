@@ -8,6 +8,9 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       includeAssets: ["pwa-192.svg", "pwa-512.svg"],
+      workbox: {
+        globIgnores: ["**/runtime-config.js"]
+      },
       manifest: {
         name: "Family Expense PWA",
         short_name: "Family Expense",
