@@ -20,7 +20,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties({AppCorsProperties.class, GoogleAuthProperties.class, JwtProperties.class})
+@EnableConfigurationProperties({AppCorsProperties.class, AppUploadProperties.class, GoogleAuthProperties.class, JwtProperties.class})
 public class SecurityConfig {
 
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
@@ -37,6 +37,7 @@ public class SecurityConfig {
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(auth -> auth
         .requestMatchers("/actuator/health/**", "/api/health", "/api/auth/google").permitAll()
+        .requestMatchers(HttpMethod.GET, "/api/uploads/**").permitAll()
         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
         .requestMatchers("/api/users/admin/**").hasRole("ADMIN")
         .anyRequest().authenticated()

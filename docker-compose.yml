@@ -48,10 +48,13 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-samplepass}
       APP_JWT_SECRET: ${APP_JWT_SECRET}
       APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:18080,http://127.0.0.1:18080}
+      APP_UPLOAD_DIR: ${APP_UPLOAD_DIR:-/data/uploads}
       GOOGLE_ALLOWED_CLIENT_IDS: ${GOOGLE_ALLOWED_CLIENT_IDS:-}
     depends_on:
       postgres:
         condition: service_healthy
+    volumes:
+      - expense_uploads:/data/uploads
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health | grep UP || exit 1"]
       interval: 15s
@@ -112,3 +115,4 @@ networks:
 
 volumes:
   postgres_data:
+  expense_uploads:

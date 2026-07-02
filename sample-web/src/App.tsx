@@ -223,6 +223,12 @@ export default function App() {
     }
   }
 
+  async function handleUploadExpenseImage(file: File) {
+    const response = await api.uploadExpenseImage(file);
+    setMessage("Da tai anh hoa don len server.");
+    return response.url;
+  }
+
   async function handleDeleteExpense(expenseId: number) {
     try {
       await api.deleteExpense(expenseId);
@@ -406,8 +412,10 @@ export default function App() {
 
       {showExpenseForm && (
         <ExpenseFormSheet
+          currentUser={user}
           users={users.filter((member) => member.active)}
           initialExpense={editingExpense}
+          onUploadImage={handleUploadExpenseImage}
           onClose={() => {
             setShowExpenseForm(false);
             setEditingExpense(null);
@@ -703,13 +711,17 @@ function AccountTab({
 }
 
 function ExpenseFormSheet({
+  currentUser,
   users,
   initialExpense,
+  onUploadImage,
   onClose,
   onSave
 }: {
+  currentUser: User;
   users: UserOption[];
   initialExpense: Expense | null;
+  onUploadImage: (file: File) => Promise<string>;
   onClose: () => void;
   onSave: (payload: ExpensePayload) => Promise<void>;
 }) {
@@ -722,7 +734,7 @@ function ExpenseFormSheet({
   const [description, setDescription] = useState<string>(initialExpense?.description || "");
   const [imageUrl, setImageUrl] = useState<string>(initialExpense?.imageUrl || "");
   const [expenseDate, setExpenseDate] = useState<string>(initialExpense?.expenseDate || formatDateInput(new Date()));
-  const [payerId, setPayerId] = useState<number>(initialExpense?.payerId || activeUsers[0]?.id || 0);
+  const [payerId, setPayerId] = useState<number>(initialExpense?.payerId || currentUser.id || activeUsers[0]?.id || 0);
   const [splitType, setSplitType] = useState<ExpenseSplitType>(initialExpense?.splitType || "EQUAL");
   const [selectedIds, setSelectedIds] = useState<number[]>(initialSelectedIds);
   const [manualShares, setManualShares] = useState<Record<number, string>>(() => {
@@ -735,6 +747,8 @@ function ExpenseFormSheet({
     return values;
   });
   const [formError, setFormError] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const numericAmount = Number(amount || 0);
   const equalPreview = calculateEqualSplit(numericAmount, selectedIds.length);
@@ -747,6 +761,26 @@ function ExpenseFormSheet({
       }
       return [...current, userId];
     });
+  }
+
+  async function handleImagePick(event: React.ChangeEvent<HTMLInputElement>) {
+    const selectedFile = event.target.files?.[0];
+    if (!selectedFile) {
+      return;
+    }
+
+    setFormError("");
+    setUploadingImage(true);
+
+    try {
+      const nextImageUrl = await onUploadImage(selectedFile);
+      setImageUrl(nextImageUrl);
+    } catch (uploadError) {
+      setFormError(uploadError instanceof Error ? uploadError.message : "Khong tai duoc anh hoa don.");
+    } finally {
+      setUploadingImage(false);
+      event.target.value = "";
+    }
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -822,6 +856,34 @@ function ExpenseFormSheet({
             Anh hoa don (URL)
             <input value={imageUrl} onChange={(event) => setImageUrl(event.target.value)} />
           </label>
+
+          <div className="receipt-upload-card">
+            <div className="receipt-upload-header">
+              <div>
+                <strong>Chup hoac tai anh hoa don</strong>
+                <p>{uploadingImage ? "Dang tai anh len server..." : "Anh se duoc luu ngay tren server va gan vao khoan chi."}</p>
+              </div>
+              <button className="secondary-button" onClick={() => fileInputRef.current?.click()} type="button">
+                {uploadingImage ? "Dang tai..." : "Chon anh"}
+              </button>
+            </div>
+            <input
+              ref={fileInputRef}
+              accept="image/*"
+              capture="environment"
+              hidden
+              onChange={handleImagePick}
+              type="file"
+            />
+            {imageUrl && (
+              <div className="receipt-preview">
+                <img alt="Anh hoa don" src={imageUrl} />
+                <a href={imageUrl} rel="noreferrer" target="_blank">
+                  Xem anh day du
+                </a>
+              </div>
+            )}
+          </div>
 
           <label>
             Ngay chi
@@ -963,6 +1025,13 @@ function ExpenseItem({
             {expense.payerName} thanh toan · {formatDate(expense.expenseDate)}
           </p>
           <p>{expense.shares.map((share) => `${share.fullName}: ${formatCurrency(share.shareAmount)}`).join(" · ")}</p>
+          {expense.imageUrl && (
+            <p>
+              <a href={expense.imageUrl} rel="noreferrer" target="_blank">
+                Xem anh hoa don
+              </a>
+            </p>
+          )}
         </div>
         <strong className="expense-amount">{formatCurrency(expense.amount)}</strong>
       </div>
@@ -1099,7 +1168,10 @@ function formatDate(value: string) {
 }
 
 function formatDateInput(date: Date) {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function roundMoney(value: number) {

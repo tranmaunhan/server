@@ -30,6 +30,13 @@ export interface AuthResponse {
   user: User;
 }
 
+export interface FileUploadResponse {
+  url: string;
+  originalFilename: string;
+  contentType: string;
+  size: number;
+}
+
 export interface ExpenseShare {
   userId: number;
   fullName: string;

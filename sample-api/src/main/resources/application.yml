@@ -19,6 +19,10 @@ spring:
       indent-output: true
   flyway:
     enabled: true
+  servlet:
+    multipart:
+      max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:10MB}
+      max-request-size: ${SPRING_SERVLET_MULTIPART_MAX_REQUEST_SIZE:10MB}
 
 server:
   port: ${SERVER_PORT:8080}
@@ -26,6 +30,9 @@ server:
 app:
   cors:
     allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173,http://localhost:18080,http://127.0.0.1:18080}
+  upload:
+    dir: ${APP_UPLOAD_DIR:uploads}
+    public-base-path: ${APP_UPLOAD_PUBLIC_BASE_PATH:/api/uploads}
   google:
     allowed-client-ids: ${GOOGLE_ALLOWED_CLIENT_IDS:}
     jwk-set-uri: ${GOOGLE_JWK_SET_URI:https://www.googleapis.com/oauth2/v3/certs}

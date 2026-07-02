@@ -3,6 +3,7 @@ import type {
   DashboardResponse,
   Expense,
   ExpensePayload,
+  FileUploadResponse,
   MonthlyReport,
   Settlement,
   SettlementStatus,
@@ -33,6 +34,15 @@ export class ApiClient {
     return this.request<AuthResponse>("/auth/google", {
       method: "POST",
       body: JSON.stringify({ credential })
+    });
+  }
+
+  uploadExpenseImage(file: File) {
+    const formData = new FormData();
+    formData.append("file", file);
+    return this.multipartRequest<FileUploadResponse>("/uploads/expenses", {
+      method: "POST",
+      body: formData
     });
   }
 
@@ -151,6 +161,44 @@ export class ApiClient {
         userId: (payload as Partial<AuthResponse>)?.user?.id,
         email: (payload as Partial<AuthResponse>)?.user?.email
       });
+    }
+
+    return payload as T;
+  }
+
+  private async multipartRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+    const token = this.getToken();
+    const headers = new Headers(init.headers);
+    const method = init.method || "POST";
+    const url = `${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
+
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+
+    const response = await fetch(url, {
+      ...init,
+      headers
+    });
+
+    if (response.status === 204) {
+      return undefined as T;
+    }
+
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      console.error("[api] multipart request failed", {
+        method,
+        url,
+        status: response.status,
+        payload
+      });
+      throw new ApiError(
+        (payload as { message?: string }).message || `Yeu cau that bai. (${response.status})`,
+        response.status,
+        url,
+        payload
+      );
     }
 
     return payload as T;
