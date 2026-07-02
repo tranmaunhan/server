@@ -20,9 +20,9 @@ export function HomeTab({ dashboard, onAddExpense, user }: HomeTabProps) {
             <p className="hero-note">Tạo khoản chi mới thật nhanh và theo dõi số liệu trong ngày.</p>
           </div>
         </div>
-        <button className="primary-button" onClick={onAddExpense} type="button">
+        {/* <button className="primary-button" onClick={onAddExpense} type="button">
           Thêm khoản chi mới
-        </button>
+        </button> */}
       </section>
 
       <section className="metrics-grid">

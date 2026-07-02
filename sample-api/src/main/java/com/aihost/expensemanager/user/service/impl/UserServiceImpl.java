@@ -39,13 +39,7 @@ public class UserServiceImpl implements UserService {
     user.setFullName(profile.fullName() == null || profile.fullName().isBlank() ? profile.email() : profile.fullName().trim());
     user.setAvatarUrl(profile.avatarUrl());
 
-    AppUser savedUser = appUserRepository.save(user);
-
-    if (!savedUser.isActive()) {
-      throw new ForbiddenException("Tài khoản của bạn đang chờ quản trị viên kích hoạt.");
-    }
-
-    return savedUser;
+    return appUserRepository.save(user);
   }
 
   @Override

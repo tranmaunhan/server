@@ -6,6 +6,7 @@ import com.aihost.expensemanager.auth.model.GoogleUserProfile;
 import com.aihost.expensemanager.auth.service.AuthService;
 import com.aihost.expensemanager.auth.service.GoogleTokenVerifierService;
 import com.aihost.expensemanager.auth.service.JwtService;
+import com.aihost.expensemanager.common.exception.ForbiddenException;
 import com.aihost.expensemanager.user.entity.AppUser;
 import com.aihost.expensemanager.user.mapper.UserMapper;
 import com.aihost.expensemanager.user.service.UserService;
@@ -44,6 +45,7 @@ public class AuthServiceImpl implements AuthService {
       profile.emailVerified(),
       profile.subject()
     );
+
     AppUser user = userService.syncGoogleUser(profile);
     log.info(
       "User synced after Google login: userId={}, email={}, role={}, active={}",
@@ -52,6 +54,11 @@ public class AuthServiceImpl implements AuthService {
       user.getRole(),
       user.isActive()
     );
+
+    if (!user.isActive()) {
+      throw new ForbiddenException("Tài khoản của bạn đang chờ quản trị viên kích hoạt.");
+    }
+
     String accessToken = jwtService.generateToken(user);
 
     return new AuthResponse(
