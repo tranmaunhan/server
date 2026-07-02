@@ -371,6 +371,11 @@ button {
   color: #f5fffb;
 }
 
+.compact-home-hero {
+  gap: 14px;
+  padding: 16px;
+}
+
 .home-overview-card .eyebrow,
 .home-overview-card p,
 .home-overview-card span,
@@ -392,6 +397,10 @@ button {
   min-width: 0;
 }
 
+.compact-home-hero .home-overview-copy {
+  gap: 4px;
+}
+
 .home-overview-copy p {
   margin: 0;
   max-width: 34ch;
@@ -407,10 +416,21 @@ button {
   box-shadow: 0 16px 32px rgba(10, 48, 42, 0.24);
 }
 
+.compact-home-hero .home-overview-avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+}
+
 .home-overview-grid {
   display: grid;
   grid-template-columns: 1.35fr 1fr;
   gap: 14px;
+}
+
+.compact-home-hero .home-overview-grid,
+.compact-home-hero .home-insights-grid {
+  gap: 10px;
 }
 
 .home-amount-card {
@@ -419,6 +439,11 @@ button {
   padding: 18px;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.compact-home-hero .home-amount-card,
+.compact-home-hero .home-insight-pill {
+  padding: 14px;
 }
 
 .home-amount-card.major {
@@ -442,11 +467,19 @@ button {
   line-height: 1.2;
 }
 
+.compact-home-hero .home-amount-card strong {
+  font-size: 1.12rem;
+}
+
 .home-amount-card p {
   margin: 0;
   font-size: 0.92rem;
   line-height: 1.55;
   color: rgba(245, 255, 251, 0.78);
+}
+
+.compact-home-hero .home-amount-card p {
+  display: none;
 }
 
 .home-insights-grid {
@@ -476,12 +509,20 @@ button {
   line-height: 1.4;
 }
 
+.compact-home-hero .home-insight-pill strong {
+  font-size: 0.94rem;
+}
+
 .home-cta-button {
   width: 100%;
   justify-content: center;
   background: linear-gradient(135deg, #fff4c2, #ffd96f);
   color: #194239;
   box-shadow: 0 14px 28px rgba(10, 48, 42, 0.22);
+}
+
+.home-cta-button.compact {
+  padding: 11px 14px;
 }
 
 .home-recent-panel .muted-text {

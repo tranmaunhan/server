@@ -40,9 +40,7 @@ export function ExpenseFormSheet({
     ? initialExpense.shares.map((share) => share.userId)
     : activeUsers.slice(0, Math.min(activeUsers.length, 3)).map((item) => item.id);
 
-  const [amount, setAmount] = useState<string>(
-    initialExpense ? normalizeMoneyInput(String(initialExpense.amount)) : ""
-  );
+  const [amount, setAmount] = useState<string>(initialExpense ? normalizeMoneyInput(String(initialExpense.amount)) : "");
   const [description, setDescription] = useState<string>(initialExpense?.description || "");
   const [imageUrl, setImageUrl] = useState<string>(initialExpense?.imageUrl || "");
   const [splitType, setSplitType] = useState<ExpenseSplitType>(initialExpense?.splitType || "EQUAL");
@@ -159,7 +157,7 @@ export function ExpenseFormSheet({
           <label>
             Tổng tiền
             <input
-              inputMode="decimal"
+              inputMode="numeric"
               placeholder="0"
               value={formatMoneyInput(amount)}
               onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
@@ -186,13 +184,7 @@ export function ExpenseFormSheet({
                 </button>
               </div>
             </div>
-            <input
-              ref={libraryInputRef}
-              accept="image/*"
-              hidden
-              onChange={handleImagePick}
-              type="file"
-            />
+            <input ref={libraryInputRef} accept="image/*" hidden onChange={handleImagePick} type="file" />
             <input
               ref={cameraInputRef}
               accept="image/*"
@@ -264,7 +256,7 @@ export function ExpenseFormSheet({
                   <label key={userId}>
                     {member.fullName}
                     <input
-                      inputMode="decimal"
+                      inputMode="numeric"
                       placeholder="0"
                       value={formatMoneyInput(manualShares[userId] || "")}
                       onChange={(event) =>

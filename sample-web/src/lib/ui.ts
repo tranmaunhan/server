@@ -31,24 +31,7 @@ export function normalizeMoneyInput(value: string) {
     return "";
   }
 
-  const cleaned = value
-    .replace(/[₫\s]/g, "")
-    .replace(/[dđDĐ]|VND/gi, "")
-    .replace(/[^0-9,.\-]/g, "");
-
-  const lastCommaIndex = cleaned.lastIndexOf(",");
-  const lastDotIndex = cleaned.lastIndexOf(".");
-  const decimalIndex = Math.max(lastCommaIndex, lastDotIndex);
-
-  if (decimalIndex >= 0) {
-    const integerPart = cleaned.slice(0, decimalIndex).replace(/\D/g, "");
-    const decimalPart = cleaned.slice(decimalIndex + 1).replace(/\D/g, "").slice(0, 2);
-    const safeInteger = integerPart.replace(/^0+(?=\d)/, "");
-
-    return decimalPart ? `${safeInteger || "0"}.${decimalPart}` : safeInteger;
-  }
-
-  return cleaned.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+  return value.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
 }
 
 export function formatMoneyInput(value: string) {
@@ -57,12 +40,9 @@ export function formatMoneyInput(value: string) {
     return "";
   }
 
-  const [integerPart, decimalPart] = normalized.split(".");
-  const formattedInteger = new Intl.NumberFormat("vi-VN", {
+  return new Intl.NumberFormat("vi-VN", {
     maximumFractionDigits: 0
-  }).format(Number(integerPart || 0));
-
-  return decimalPart ? `${formattedInteger},${decimalPart}` : formattedInteger;
+  }).format(Number(normalized || 0));
 }
 
 export function parseMoneyInputValue(value: string) {

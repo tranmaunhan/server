@@ -17,12 +17,11 @@ export function HomeTab({ dashboard, onAddExpense, user }: HomeTabProps) {
 
   return (
     <div className="tab-stack">
-      <section className="panel-card home-overview-card">
+      <section className="panel-card home-overview-card compact-home-hero">
         <div className="home-overview-head">
           <div className="home-overview-copy">
-            <p className="eyebrow">A1.403 Dashboard</p>
+            <p className="eyebrow">A1.403</p>
             <h2>Chào {user.fullName}</h2>
-            <p>Trang chủ mới tập trung vào số liệu chính để bạn nhìn nhanh tình hình chi tiêu trong ngày và trong tháng.</p>
           </div>
           <img
             alt={user.fullName}
@@ -35,13 +34,11 @@ export function HomeTab({ dashboard, onAddExpense, user }: HomeTabProps) {
           <article className="home-amount-card major">
             <span>Chi tháng này</span>
             <strong>{formatCurrency(monthTotal)}</strong>
-            <p>Tổng cộng toàn bộ khoản chi đã ghi nhận trong tháng hiện tại.</p>
           </article>
 
           <article className="home-amount-card minor">
             <span>Chi hôm nay</span>
             <strong>{formatCurrency(todayTotal)}</strong>
-            <p>Cập nhật nhanh để biết hôm nay đã chi bao nhiêu.</p>
           </article>
         </div>
 
@@ -57,7 +54,7 @@ export function HomeTab({ dashboard, onAddExpense, user }: HomeTabProps) {
           </article>
         </div>
 
-        <button className="primary-button home-cta-button" onClick={onAddExpense} type="button">
+        <button className="primary-button home-cta-button compact" onClick={onAddExpense} type="button">
           Thêm khoản chi mới
         </button>
       </section>
@@ -67,7 +64,6 @@ export function HomeTab({ dashboard, onAddExpense, user }: HomeTabProps) {
           <div>
             <p className="eyebrow">Gần đây</p>
             <h3>Khoản chi mới nhất</h3>
-            <p className="muted-text">Các khoản chi vừa được cập nhật gần đây nhất trong hệ thống.</p>
           </div>
         </div>
 
