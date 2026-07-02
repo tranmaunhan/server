@@ -232,7 +232,7 @@ export default function App() {
 
     try {
       await syncAppData(year, month);
-      setMessage("\u0110\u00e3 l\u00e0m m\u1edbi d\u1eef li\u1ec7u.");
+      setMessage("Đã làm mới dữ liệu.");
     } catch (refreshError) {
       handleApiError(refreshError);
     } finally {
@@ -437,10 +437,12 @@ export default function App() {
   const pullProgress = Math.min(pullDistance / PULL_REFRESH_THRESHOLD, 1);
   const pullOffset = pullDistance > 0 || pullRefreshing ? Math.max(pullDistance, pullRefreshing ? PULL_REFRESH_HOLD : 0) : 0;
   const pullLabel = pullRefreshing
-    ? "\u0110ang l\u00e0m m\u1edbi d\u1eef li\u1ec7u..."
+    ? "Đang làm mới dữ liệu..."
     : pullDistance >= PULL_REFRESH_THRESHOLD
-      ? "Th\u1ea3 tay \u0111\u1ec3 l\u00e0m m\u1edbi"
-      : "K\u00e9o xu\u1ed1ng \u0111\u1ec3 l\u00e0m m\u1edbi";
+      ? "Thả tay để làm mới"
+      : "Kéo xuống để làm mới";
+
+  const hasStatus = loading || Boolean(message) || Boolean(error);
 
   if (!user) {
     return (
@@ -484,62 +486,66 @@ export default function App() {
         <strong>{pullLabel}</strong>
       </div>
 
-      <div className="pull-refresh-shell" style={{ transform: `translateY(${pullOffset}px)` }}>
-      <header className="topbar">
-        <div>
-          <p className="eyebrow">Family Expense PWA</p>
-          <h1>{tabTitle(activeTab)}</h1>
+      {hasStatus && (
+        <div className="status-layer" role="status" aria-live="polite">
+          {loading && <div className="status-banner">Đang tải dữ liệu...</div>}
+          {message && <div className="status-banner success">{message}</div>}
+          {error && <div className="status-banner error">{error}</div>}
         </div>
-        <button className="topbar-avatar" onClick={() => setActiveTab("account")} type="button">
-          <img alt={user.fullName} src={user.avatarUrl || fallbackAvatar(user.fullName)} />
-        </button>
-      </header>
+      )}
 
-      {loading && <div className="status-banner">Đang tải dữ liệu...</div>}
-      {message && <div className="status-banner success">{message}</div>}
-      {error && <div className="status-banner error">{error}</div>}
+      <div className="pull-refresh-shell" style={{ transform: `translateY(${pullOffset}px)` }}>
+        <header className="topbar">
+          <div>
+            <p className="eyebrow">Family Expense PWA</p>
+            <h1>{tabTitle(activeTab)}</h1>
+          </div>
+          <button className="topbar-avatar" onClick={() => setActiveTab("account")} type="button">
+            <img alt={user.fullName} src={user.avatarUrl || fallbackAvatar(user.fullName)} />
+          </button>
+        </header>
 
-      <section className="screen-content">
-        {activeTab === "home" && (
-          <HomeTab
-            user={user}
-            dashboard={dashboard}
-            onAddExpense={openCreateExpense}
-          />
-        )}
+        <section className="screen-content">
+          {activeTab === "home" && (
+            <HomeTab
+              user={user}
+              dashboard={dashboard}
+              onAddExpense={openCreateExpense}
+            />
+          )}
 
-        {activeTab === "expenses" && (
-          <ExpensesTab
-            currentUser={user}
-            expenses={expenses}
-            onCreate={openCreateExpense}
-            onEdit={openEditExpense}
-            onDelete={handleDeleteExpense}
-          />
-        )}
+          {activeTab === "expenses" && (
+            <ExpensesTab
+              currentUser={user}
+              expenses={expenses}
+              onCreate={openCreateExpense}
+              onEdit={openEditExpense}
+              onDelete={handleDeleteExpense}
+            />
+          )}
 
-        {activeTab === "reports" && (
-          <ReportsTab
-            report={report}
-            settlements={settlements}
-            month={month}
-            year={year}
-            onPeriodChange={refreshPeriodData}
-            onGenerateSettlements={handleGenerateSettlements}
-            onSettlementStatus={handleSettlementStatus}
-          />
-        )}
+          {activeTab === "reports" && (
+            <ReportsTab
+              report={report}
+              settlements={settlements}
+              month={month}
+              year={year}
+              onPeriodChange={refreshPeriodData}
+              onGenerateSettlements={handleGenerateSettlements}
+              onSettlementStatus={handleSettlementStatus}
+            />
+          )}
 
-        {activeTab === "account" && (
-          <AccountTab
-            currentUser={user}
-            users={adminUsers}
-            onLogout={logout}
-            onUserRoleChange={handleUserRoleChange}
-            onUserStatusChange={handleUserStatusChange}
-          />
-        )}
-      </section>
+          {activeTab === "account" && (
+            <AccountTab
+              currentUser={user}
+              users={adminUsers}
+              onLogout={logout}
+              onUserRoleChange={handleUserRoleChange}
+              onUserStatusChange={handleUserStatusChange}
+            />
+          )}
+        </section>
       </div>
 
       <button className="fab-button" onClick={openCreateExpense} type="button" aria-label="Thêm khoản chi">
@@ -833,9 +839,7 @@ function AccountTab({
             <div>
               <p className="eyebrow">Quản lý thành viên</p>
               <h3>Admin panel</h3>
-              <p className="muted-text">
-                {"Danh s\u00e1ch n\u00e0y bao g\u1ed3m c\u1ea3 t\u00e0i kho\u1ea3n \u0111ang ho\u1ea1t \u0111\u1ed9ng v\u00e0 t\u00e0i kho\u1ea3n \u0111\u00e3 b\u1ecb kh\u00f3a."}
-              </p>
+              <p className="muted-text">Danh sách này bao gồm cả tài khoản đang hoạt động và tài khoản đã bị khóa.</p>
             </div>
           </div>
           <div className="list-stack">
@@ -844,7 +848,7 @@ function AccountTab({
                 <div>
                   <strong>{member.fullName}</strong>
                   <p>{member.email}</p>
-                  <p>{member.active ? "\u0110ang ho\u1ea1t \u0111\u1ed9ng" : "\u0110\u00e3 b\u1ecb kh\u00f3a"}</p>
+                  <p>{member.active ? "Đang hoạt động" : "Đã bị khóa"}</p>
                 </div>
                 <div className="member-actions">
                   <select
@@ -886,10 +890,10 @@ function ExpenseFormSheet({
   onClose: () => void;
   onSave: (payload: ExpensePayload) => Promise<void>;
 }) {
-  const activeUsers = users.filter((user) => user.active);
+  const activeUsers = users.filter((item) => item.active);
   const initialSelectedIds = initialExpense
     ? initialExpense.shares.map((share) => share.userId)
-    : activeUsers.slice(0, Math.min(activeUsers.length, 3)).map((user) => user.id);
+    : activeUsers.slice(0, Math.min(activeUsers.length, 3)).map((item) => item.id);
 
   const [amount, setAmount] = useState<string>(initialExpense ? String(initialExpense.amount) : "");
   const [description, setDescription] = useState<string>(initialExpense?.description || "");
@@ -1182,9 +1186,9 @@ function ExpenseItem({
             <>
               <img className="expense-receipt-image" alt="Ảnh hóa đơn" src={expense.imageUrl} />
               <p>
-              <a href={expense.imageUrl} rel="noreferrer" target="_blank">
-                Xem ảnh hóa đơn
-              </a>
+                <a href={expense.imageUrl} rel="noreferrer" target="_blank">
+                  Xem ảnh hóa đơn
+                </a>
               </p>
             </>
           )}
@@ -1324,10 +1328,10 @@ function formatDate(value: string) {
 }
 
 function formatDateInput(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const nextYear = date.getFullYear();
+  const nextMonth = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return `${nextYear}-${nextMonth}-${day}`;
 }
 
 function roundMoney(value: number) {

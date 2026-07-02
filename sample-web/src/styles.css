@@ -1,6 +1,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap");
 
 :root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --mobile-shell-width: 460px;
   color: #163630;
   background:
     radial-gradient(circle at top left, rgba(208, 242, 230, 0.8), transparent 30%),
@@ -22,6 +27,7 @@ body,
 
 body {
   min-height: 100vh;
+  padding: 0;
 }
 
 button,
@@ -46,7 +52,7 @@ button {
 .auth-shell {
   display: grid;
   place-items: center;
-  padding: 24px;
+  padding: calc(24px + var(--safe-top)) calc(18px + var(--safe-right)) calc(24px + var(--safe-bottom)) calc(18px + var(--safe-left));
 }
 
 .auth-card {
@@ -124,7 +130,9 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 18px 14px;
+  width: min(100%, var(--mobile-shell-width));
+  margin: 0 auto;
+  padding: calc(14px + var(--safe-top)) 18px 14px;
   background: rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid rgba(19, 72, 62, 0.08);
@@ -132,6 +140,8 @@ button {
 
 .pull-refresh-shell {
   min-height: 100vh;
+  width: min(100%, var(--mobile-shell-width));
+  margin: 0 auto;
   transition: transform 0.18s ease;
   will-change: transform;
 }
@@ -139,8 +149,8 @@ button {
 .pull-refresh-indicator {
   position: fixed;
   left: 50%;
-  top: 10px;
-  z-index: 22;
+  top: calc(8px + var(--safe-top));
+  z-index: 80;
   display: inline-flex;
   align-items: center;
   gap: 10px;
@@ -193,7 +203,9 @@ button {
 }
 
 .screen-content {
-  padding: 18px 18px 110px;
+  width: min(100%, var(--mobile-shell-width));
+  margin: 0 auto;
+  padding: 18px 18px calc(120px + var(--safe-bottom));
 }
 
 .tab-stack,
@@ -349,13 +361,13 @@ button {
   display: flex;
   justify-content: center;
   align-items: flex-end;
-  z-index: 40;
-  padding: 18px;
+  z-index: 60;
+  padding: 18px 18px calc(18px + var(--safe-bottom));
 }
 
 .sheet-card {
   width: min(100%, 540px);
-  max-height: min(92vh, 880px);
+  max-height: min(88vh, 880px);
   overflow: auto;
   border-radius: 28px;
   background: #fff;
@@ -484,12 +496,12 @@ button {
 
 .bottom-nav {
   position: fixed;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
+  left: 50%;
+  bottom: calc(12px + var(--safe-bottom));
   z-index: 30;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  width: min(calc(100vw - 24px), var(--mobile-shell-width));
   gap: 8px;
   padding: 10px;
   background: rgba(255, 255, 255, 0.92);
@@ -497,6 +509,7 @@ button {
   border-radius: 24px;
   box-shadow: 0 20px 50px rgba(18, 50, 44, 0.12);
   backdrop-filter: blur(18px);
+  transform: translateX(-50%);
 }
 
 .bottom-nav-item {
@@ -508,8 +521,8 @@ button {
 
 .fab-button {
   position: fixed;
-  right: 22px;
-  bottom: 94px;
+  right: max(22px, calc((100vw - min(calc(100vw - 24px), var(--mobile-shell-width))) / 2 + 16px));
+  bottom: calc(88px + var(--safe-bottom));
   width: 60px;
   height: 60px;
   border-radius: 20px;
@@ -522,12 +535,24 @@ button {
 }
 
 .status-banner {
-  margin: 0 18px;
   padding: 10px 14px;
   border-radius: 14px;
   background: #eef6ff;
   color: #134172;
   font-weight: 500;
+  box-shadow: 0 14px 30px rgba(18, 50, 44, 0.14);
+}
+
+.status-layer {
+  position: fixed;
+  top: calc(8px + var(--safe-top));
+  left: 50%;
+  z-index: 95;
+  display: grid;
+  gap: 8px;
+  width: min(calc(100vw - 24px), var(--mobile-shell-width));
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
 .status-banner.success {
@@ -580,15 +605,69 @@ button {
 }
 
 @media (min-width: 900px) {
+  .pull-refresh-shell,
+  .topbar,
   .screen-content {
     width: min(960px, calc(100% - 36px));
-    margin: 0 auto;
+  }
+
+  .screen-content {
+    padding-bottom: 132px;
   }
 
   .bottom-nav {
-    left: 50%;
-    right: auto;
     width: 720px;
-    transform: translateX(-50%);
+  }
+
+  .status-layer {
+    width: min(720px, calc(100vw - 36px));
+  }
+}
+
+@media (max-width: 480px) {
+  .auth-card,
+  .hero-card,
+  .panel-card,
+  .metric-card,
+  .expense-card,
+  .member-balance-card,
+  .settlement-card,
+  .settlement-suggestion-card,
+  .member-admin-card,
+  .sheet-card {
+    border-radius: 22px;
+  }
+
+  .screen-content {
+    padding-inline: 14px;
+  }
+
+  .topbar {
+    padding-inline: 14px;
+  }
+
+  .hero-row,
+  .panel-heading,
+  .expense-main,
+  .receipt-upload-header,
+  .settlement-card,
+  .member-admin-card,
+  .member-actions,
+  .sheet-actions,
+  .account-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .metrics-grid,
+  .readonly-grid,
+  .summary-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .fab-button {
+    width: 56px;
+    height: 56px;
+    font-size: 1.85rem;
   }
 }
