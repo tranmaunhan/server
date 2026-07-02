@@ -23,6 +23,7 @@ const DEPLOY_AUDIT_LOG = envOrDefault("DEPLOY_AUDIT_LOG", "/data/deployments.log
 const COMPOSE_PROJECT_DIR = envOrDefault("COMPOSE_PROJECT_DIR", "/workspace");
 const COMPOSE_FILE_PATH = envOrDefault("COMPOSE_FILE_PATH", "/workspace/docker-compose.yml");
 const COMPOSE_ENV_FILE = envOrDefault("COMPOSE_ENV_FILE", "");
+const COMPOSE_PROJECT_NAME = process.env.COMPOSE_PROJECT_NAME?.trim() || "";
 const UI_ENABLED = envOrDefault("DEPLOY_UI_ENABLED", "true") === "true";
 const NGINX_GENERATED_CONFIG = envOrDefault(
   "NGINX_GENERATED_CONFIG",
@@ -756,7 +757,7 @@ async function processDeployQueue() {
       timeoutMs: 10 * 60 * 1000,
       stdio: "inherit",
     });
-    const upResult = await runCompose(["up", "-d", job.composeService], {
+    const upResult = await runCompose(["up", "-d", "--no-deps", job.composeService], {
       timeoutMs: 5 * 60 * 1000,
       stdio: "inherit",
     });
@@ -994,12 +995,18 @@ async function runCompose(args, options = {}) {
   const composeArgs = [...runner.baseArgs];
 
   if (runner.mode === "docker-compose") {
+    if (COMPOSE_PROJECT_NAME) {
+      composeArgs.push("-p", COMPOSE_PROJECT_NAME);
+    }
     composeArgs.push("--project-directory", COMPOSE_PROJECT_DIR);
     composeArgs.push("-f", COMPOSE_FILE_PATH);
     if (COMPOSE_ENV_FILE) {
       composeArgs.push("--env-file", COMPOSE_ENV_FILE);
     }
   } else {
+    if (COMPOSE_PROJECT_NAME) {
+      composeArgs.push("--project-name", COMPOSE_PROJECT_NAME);
+    }
     composeArgs.push("--project-directory", COMPOSE_PROJECT_DIR);
     composeArgs.push("-f", COMPOSE_FILE_PATH);
     if (COMPOSE_ENV_FILE) {

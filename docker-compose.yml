@@ -85,6 +85,7 @@ services:
       COMPOSE_PROJECT_DIR: ${COMPOSE_PROJECT_DIR:-/workspace}
       COMPOSE_FILE_PATH: ${COMPOSE_FILE_PATH:-/workspace/docker-compose.yml}
       COMPOSE_ENV_FILE: ${COMPOSE_ENV_FILE:-/workspace/.env}
+      COMPOSE_PROJECT_NAME: ${COMPOSE_PROJECT_NAME:-}
       NGINX_GENERATED_CONFIG: /workspace/nginx/conf.d/zz-generated-routes.conf
       NGINX_CONTAINER_NAME: nginx-gateway
       NGINX_MANAGEMENT_ENABLED: "true"

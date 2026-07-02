@@ -35,7 +35,7 @@ Khi nhan deploy cho mot `serviceName`, service se:
 1. nhan request va tra ngay `202 Accepted` cung `jobId`
 2. dua job vao hang doi nen
 3. `docker compose pull <composeService>`
-4. `docker compose up -d <composeService>`
+4. `docker compose up -d --no-deps <composeService>`
 5. health check theo whitelist
 6. ghi audit log JSONL
 
@@ -48,6 +48,7 @@ Tat ca runtime config deu lay tu env:
 - `DEPLOY_CONFIG`
 - `ROUTES_CONFIG`
 - `DEPLOY_AUDIT_LOG`
+- `COMPOSE_PROJECT_NAME`
 - `COMPOSE_PROJECT_DIR`
 - `COMPOSE_FILE_PATH`
 - `COMPOSE_ENV_FILE`
@@ -56,6 +57,8 @@ Tat ca runtime config deu lay tu env:
 - `NGINX_MANAGEMENT_ENABLED`
 - `HEALTHCHECK_TIMEOUT_MS`
 - `HEALTHCHECK_INTERVAL_MS`
+
+`COMPOSE_PROJECT_NAME` nen duoc dat giong voi project name ma stack compose tren server dang dung. Neu khong, deploy-manager co the coi day la mot compose project khac va co gang tao lai container nhu `postgres`, dan den loi `container name already in use`.
 
 ## Schema whitelist app
 

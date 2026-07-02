@@ -24,7 +24,7 @@ Deploy Manager se tu:
 1. tra ngay `202 Accepted` voi `jobId`
 2. dua deploy vao hang doi nen
 3. `docker compose pull <serviceName>`
-4. `docker compose up -d <serviceName>`
+4. `docker compose up -d --no-deps <serviceName>`
 5. health check
 6. ghi audit log
 
