@@ -209,12 +209,16 @@ button {
 }
 
 .tab-stack,
-.list-stack,
 .sheet-form,
 .share-grid,
 .preview-grid {
   display: grid;
-  gap: 16px;
+  gap: 18px;
+}
+
+.list-stack {
+  display: grid;
+  gap: 14px;
 }
 
 .hero-card,
@@ -318,7 +322,7 @@ button {
 .settlement-card,
 .settlement-suggestion-card,
 .member-admin-card {
-  padding: 16px;
+  padding: 18px;
 }
 
 .expense-main,
@@ -513,10 +517,18 @@ button {
 }
 
 .bottom-nav-item {
-  padding: 12px 8px;
+  display: grid;
+  place-items: center;
+  min-height: 52px;
+  padding: 10px 8px;
   background: transparent;
   color: #56756b;
   font-weight: 600;
+}
+
+.nav-icon {
+  width: 22px;
+  height: 22px;
 }
 
 .fab-button {
@@ -594,6 +606,86 @@ button {
   font-size: 1.4rem;
 }
 
+.full-width {
+  width: 100%;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.account-panel {
+  display: grid;
+  gap: 16px;
+}
+
+.account-meta {
+  display: grid;
+  gap: 6px;
+}
+
+.account-meta p,
+.account-meta h3 {
+  margin: 0;
+}
+
+.account-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.account-stat {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #f7fbf8;
+  border: 1px solid rgba(19, 72, 62, 0.08);
+}
+
+.account-stat span {
+  color: #5f7a71;
+  font-size: 0.88rem;
+}
+
+.member-admin-info {
+  display: grid;
+  gap: 6px;
+}
+
+.member-admin-info p,
+.member-admin-info strong {
+  margin: 0;
+}
+
+.member-status {
+  display: inline-flex;
+  width: fit-content;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.member-status.active {
+  background: #e6faf2;
+  color: #0f766e;
+}
+
+.member-status.inactive {
+  background: #fff1f2;
+  color: #b42318;
+}
+
 @keyframes pull-refresh-spin {
   from {
     transform: rotate(0deg);
@@ -651,7 +743,6 @@ button {
   .expense-main,
   .receipt-upload-header,
   .settlement-card,
-  .member-admin-card,
   .member-actions,
   .sheet-actions,
   .account-header {
@@ -659,7 +750,22 @@ button {
     flex-direction: column;
   }
 
+  .member-admin-card {
+    display: grid;
+    gap: 14px;
+  }
+
+  .member-actions {
+    width: 100%;
+  }
+
+  .member-actions select,
+  .member-actions button {
+    width: 100%;
+  }
+
   .metrics-grid,
+  .account-stats,
   .readonly-grid,
   .summary-strip {
     grid-template-columns: 1fr;

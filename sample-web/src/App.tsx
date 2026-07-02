@@ -25,6 +25,14 @@ const PULL_REFRESH_MAX = 132;
 const PULL_REFRESH_HOLD = 68;
 const config = getAppConfig();
 const api = new ApiClient(config.apiBaseUrl, () => getToken());
+const NAV_ITEMS: Array<{ key: TabKey; label: string; icon: NavIconKey }> = [
+  { key: "home", label: "Trang chủ", icon: "home" },
+  { key: "expenses", label: "Khoản chi", icon: "receipt" },
+  { key: "reports", label: "Báo cáo", icon: "chart" },
+  { key: "account", label: "Tài khoản", icon: "user" }
+];
+
+type NavIconKey = "home" | "receipt" | "chart" | "user";
 
 export default function App() {
   const today = new Date();
@@ -552,20 +560,18 @@ export default function App() {
         +
       </button>
 
-      <nav className="bottom-nav">
-        {[
-          { key: "home", label: "Trang chủ" },
-          { key: "expenses", label: "Khoản chi" },
-          { key: "reports", label: "Báo cáo" },
-          { key: "account", label: "Tài khoản" }
-        ].map((item) => (
+      <nav className="bottom-nav" aria-label="Điều hướng chính">
+        {NAV_ITEMS.map((item) => (
           <button
             key={item.key}
             className={activeTab === item.key ? "bottom-nav-item active" : "bottom-nav-item"}
+            aria-label={item.label}
             onClick={() => setActiveTab(item.key as TabKey)}
+            title={item.label}
             type="button"
           >
-            {item.label}
+            <AppIcon name={item.icon} />
+            <span className="sr-only">{item.label}</span>
           </button>
         ))}
       </nav>
@@ -819,16 +825,25 @@ function AccountTab({
 }) {
   return (
     <div className="tab-stack">
-      <section className="panel-card">
+      <section className="panel-card account-panel">
         <div className="account-header">
           <img alt={currentUser.fullName} src={currentUser.avatarUrl || fallbackAvatar(currentUser.fullName)} />
-          <div>
+          <div className="account-meta">
             <h3>{currentUser.fullName}</h3>
             <p>{currentUser.email}</p>
-            <span className="role-pill">{currentUser.role}</span>
           </div>
         </div>
-        <button className="secondary-button danger" onClick={onLogout} type="button">
+        <div className="account-stats">
+          <div className="account-stat">
+            <span>Vai trò</span>
+            <strong>{currentUser.role}</strong>
+          </div>
+          <div className="account-stat">
+            <span>Trạng thái</span>
+            <strong>{currentUser.active ? "Đang hoạt động" : "Đã bị khóa"}</strong>
+          </div>
+        </div>
+        <button className="secondary-button danger full-width" onClick={onLogout} type="button">
           Đăng xuất
         </button>
       </section>
@@ -845,10 +860,12 @@ function AccountTab({
           <div className="list-stack">
             {users.map((member) => (
               <article className="member-admin-card" key={member.id}>
-                <div>
+                <div className="member-admin-info">
                   <strong>{member.fullName}</strong>
                   <p>{member.email}</p>
-                  <p>{member.active ? "Đang hoạt động" : "Đã bị khóa"}</p>
+                  <span className={member.active ? "member-status active" : "member-status inactive"}>
+                    {member.active ? "Đang hoạt động" : "Đã bị khóa"}
+                  </span>
                 </div>
                 <div className="member-actions">
                   <select
@@ -1158,6 +1175,41 @@ function MetricCard({ label, value }: { label: string; value: string }) {
       <strong>{value}</strong>
     </article>
   );
+}
+
+function AppIcon({ name }: { name: NavIconKey }) {
+  switch (name) {
+    case "home":
+      return (
+        <svg aria-hidden="true" className="nav-icon" viewBox="0 0 24 24">
+          <path d="M4 11.5 12 5l8 6.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.9" />
+          <path d="M6.5 10.5V19h11v-8.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.9" />
+        </svg>
+      );
+    case "receipt":
+      return (
+        <svg aria-hidden="true" className="nav-icon" viewBox="0 0 24 24">
+          <path d="M7 4.5h10v15l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4V4.5Z" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.9" />
+          <path d="M9 9h6M9 12.5h6M9 16h4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.9" />
+        </svg>
+      );
+    case "chart":
+      return (
+        <svg aria-hidden="true" className="nav-icon" viewBox="0 0 24 24">
+          <path d="M5 19.5h14" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.9" />
+          <path d="M8 17V11m4 6V7m4 10v-4" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.9" />
+        </svg>
+      );
+    case "user":
+      return (
+        <svg aria-hidden="true" className="nav-icon" viewBox="0 0 24 24">
+          <path d="M12 12a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" fill="none" stroke="currentColor" strokeWidth="1.9" />
+          <path d="M5.5 19a6.5 6.5 0 0 1 13 0" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.9" />
+        </svg>
+      );
+    default:
+      return null;
+  }
 }
 
 function ExpenseItem({
