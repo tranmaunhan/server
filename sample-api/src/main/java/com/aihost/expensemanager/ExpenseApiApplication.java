@@ -1,12 +1,12 @@
-package com.aihost.sampleapi;
+package com.aihost.expensemanager;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SampleApiApplication {
+public class ExpenseApiApplication {
 
   public static void main(String[] args) {
-    SpringApplication.run(SampleApiApplication.class, args);
+    SpringApplication.run(ExpenseApiApplication.class, args);
   }
 }

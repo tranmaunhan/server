@@ -1,9 +1,12 @@
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap");
+
 :root {
-  color: #172033;
+  color: #17342c;
   background:
-    radial-gradient(circle at top left, rgba(14, 165, 233, 0.18), transparent 32%),
-    linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
-  font-family: "Segoe UI", sans-serif;
+    radial-gradient(circle at top left, rgba(210, 239, 227, 0.72), transparent 28%),
+    radial-gradient(circle at right center, rgba(241, 227, 208, 0.68), transparent 24%),
+    linear-gradient(180deg, #fffdfa 0%, #f7f7f4 100%);
+  font-family: "Be Vietnam Pro", sans-serif;
 }
 
 * {
@@ -12,86 +15,280 @@
 
 body {
   margin: 0;
+  min-height: 100vh;
 }
 
-code,
-pre {
-  font-family: "JetBrains Mono", Consolas, monospace;
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+#root {
+  min-height: 100vh;
 }
 
 .page-shell {
-  width: min(1080px, calc(100% - 32px));
-  margin: 32px auto;
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 40px 0 56px;
+}
+
+.hero-panel {
   display: grid;
-  gap: 20px;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+  gap: 24px;
+  align-items: stretch;
 }
 
-.hero-card,
-.card {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  border-radius: 24px;
-  padding: 24px;
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+.hero-copy,
+.status-stack,
+.panel {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(34, 64, 55, 0.08);
+  border-radius: 30px;
+  box-shadow: 0 18px 48px rgba(28, 54, 46, 0.08);
 }
 
-.eyebrow {
-  margin: 0 0 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.76rem;
-  color: #0369a1;
-  font-weight: 700;
+.hero-copy {
+  padding: 34px;
+}
+
+.hero-copy h1,
+.panel h2 {
+  margin: 0;
+  color: #123228;
+}
+
+.hero-copy h1 {
+  font-size: clamp(2.4rem, 4vw, 4rem);
+  line-height: 1.02;
+  max-width: 720px;
 }
 
 .lead {
-  color: #475569;
-  line-height: 1.7;
+  max-width: 760px;
+  color: #4a665e;
+  line-height: 1.75;
+  margin: 18px 0 0;
 }
 
-.grid {
+.eyebrow {
+  margin: 0 0 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.74rem;
+  color: #3a7b68;
+  font-weight: 700;
+}
+
+.feature-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 28px;
 }
 
-.card h2 {
-  margin-top: 0;
+.feature-card {
+  padding: 18px;
+  border-radius: 22px;
+  background: #f8faf8;
+  border: 1px solid rgba(34, 64, 55, 0.08);
+  display: grid;
+  gap: 8px;
 }
 
-pre {
-  white-space: pre-wrap;
-  background: #0f172a;
-  color: #e2e8f0;
+.feature-card strong {
+  color: #18352d;
+}
+
+.feature-card span,
+.muted,
+.roadmap-item span,
+.status-text {
+  color: #587168;
+  line-height: 1.65;
+}
+
+.status-stack {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+}
+
+.glass-card {
+  padding: 22px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #fbfcfa 100%);
+  border: 1px solid rgba(34, 64, 55, 0.08);
+}
+
+.card-label {
+  margin: 0 0 16px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #3a7b68;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.metric-list,
+.config-list,
+.roadmap-list {
+  display: grid;
+  gap: 14px;
+}
+
+.metric-list div,
+.config-list li,
+.roadmap-item {
+  display: grid;
+  gap: 6px;
+  padding: 14px 16px;
   border-radius: 18px;
-  padding: 16px;
+  background: #f8faf8;
+  border: 1px solid rgba(34, 64, 55, 0.08);
 }
 
-.todo-list {
+.metric-list span,
+.config-list span,
+.details-grid dt {
+  font-size: 0.9rem;
+  color: #668278;
+}
+
+.metric-list strong,
+.config-list strong,
+.roadmap-item strong,
+.details-grid dd {
+  color: #163128;
+}
+
+.config-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  display: grid;
-  gap: 12px;
 }
 
-.todo-list li {
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.panel {
+  padding: 28px;
+}
+
+.panel-header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px 16px;
-  border-radius: 16px;
-  background: #f8fafc;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  margin-bottom: 20px;
 }
 
-.error {
-  color: #b91c1c;
+.ghost-button {
+  border: 1px solid rgba(34, 64, 55, 0.14);
+  background: #ffffff;
+  color: #17342c;
+  padding: 12px 18px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.ghost-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(28, 54, 46, 0.08);
+}
+
+.google-box {
+  margin-top: 20px;
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px dashed rgba(58, 123, 104, 0.22);
+  background: #fbfcfa;
+  display: flex;
+  justify-content: center;
+}
+
+.user-card {
+  border: 1px solid rgba(34, 64, 55, 0.08);
+  border-radius: 24px;
+  padding: 22px;
+  background: linear-gradient(180deg, #ffffff 0%, #fafbf9 100%);
+}
+
+.user-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-top img {
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #f0f5f2;
+}
+
+.user-top h3 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.user-top p {
+  margin: 6px 0 0;
+  color: #5c776e;
+}
+
+.details-grid {
+  margin: 22px 0 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.details-grid div {
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: #f8faf8;
+  border: 1px solid rgba(34, 64, 55, 0.08);
+}
+
+.details-grid dt,
+.details-grid dd {
+  margin: 0;
+}
+
+.details-grid dd {
+  margin-top: 6px;
   font-weight: 600;
 }
 
-@media (max-width: 860px) {
-  .grid {
+.status-text {
+  margin-bottom: 0;
+}
+
+.error-text {
+  margin-bottom: 0;
+  color: #b42318;
+  font-weight: 600;
+}
+
+@media (max-width: 980px) {
+  .hero-panel,
+  .workspace-grid,
+  .feature-list,
+  .details-grid {
     grid-template-columns: 1fr;
+  }
+
+  .page-shell {
+    padding-top: 28px;
   }
 }

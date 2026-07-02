@@ -1,21 +1,19 @@
-# Sample Web
+# Expense Web Starter
 
-React app nay da duoc cau hinh de co the tach thanh repo rieng va deploy doc lap.
+Frontend React nay dung runtime config, nghia la image build xong van co the doi:
 
-## File deploy local cho rieng project
+- `VITE_APP_NAME`
+- `VITE_API_BASE_URL`
+- `VITE_GOOGLE_CLIENT_ID`
 
-- `.ci/deploy.env`
-- `Dockerfile`
-- `.dockerignore`
+ma khong can sua source code.
 
-`deploy.env` dinh nghia:
+Neu ban quan ly CI/CD bang GitHub, co the dat cac gia tri nay trong GitHub Variables/Secrets, sau do cap nhat `.env` tren server de container nhan lai khi restart/deploy.
 
-- `SERVICE_NAME`
-- `DOCKER_CONTEXT`
-- `IMAGE_REPOSITORY`
-- `IMAGE_TAG`
-- `DEPLOY_URL`
+## Luong dang nhap
 
-Khi repo nay con nam trong monorepo, workflow goc se doc file nay de build/push/deploy rieng cho `sample-web`.
-
-Neu sau nay tach thanh repo doc lap, ban co the giu nguyen file nay va doi workflow sang repo moi.
+1. Frontend tai Google Identity Services.
+2. Nguoi dung dang nhap bang Google.
+3. Frontend gui `credential` len `POST /api/auth/google`.
+4. Backend verify token, luu user vao PostgreSQL va tra DTO nguoi dung.
+5. Frontend goi `GET /api/users/me` bang Bearer token de khoi phuc phien.

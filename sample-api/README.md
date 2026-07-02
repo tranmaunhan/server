@@ -1,21 +1,33 @@
-# Sample API
+# Expense API Starter
 
-Spring Boot service nay da duoc cau hinh de co the tach thanh repo rieng va deploy doc lap.
+Spring Boot backend nay duoc dat san theo dung flow:
 
-## File deploy local cho rieng project
+- `entity`
+- `repository`
+- `service`
+- `service/impl`
+- `controller`
+- `mapper`
+- DTO tach rieng, controller khong tra truc tiep entity
 
-- `.ci/deploy.env`
-- `Dockerfile`
-- `.dockerignore`
+## Chuc nang da co
 
-`deploy.env` dinh nghia:
+- Dang nhap Google bang ID Token
+- Xac thuc token Google o backend
+- Dong bo user vao PostgreSQL
+- API lay user hien tai: `GET /api/users/me`
+- Health check: `GET /api/health`
 
-- `SERVICE_NAME`
-- `DOCKER_CONTEXT`
-- `IMAGE_REPOSITORY`
-- `IMAGE_TAG`
-- `DEPLOY_URL`
+## Bien moi truong can co
 
-Khi repo nay con nam trong monorepo, workflow goc se doc file nay de build/push/deploy rieng cho `sample-api`.
+- `SPRING_DATASOURCE_URL`
+- `SPRING_DATASOURCE_USERNAME`
+- `SPRING_DATASOURCE_PASSWORD`
+- `GOOGLE_ALLOWED_CLIENT_IDS`
+- `APP_ALLOWED_ORIGINS`
 
-Neu sau nay tach thanh repo doc lap, ban co the giu nguyen file nay va doi workflow sang repo moi.
+Neu ban quan ly CI/CD bang GitHub, hay luu cac gia tri nay trong GitHub Secrets/Variables va dong bo xuong file `.env` tren server truoc khi deploy.
+
+## Luu y
+
+`GOOGLE_ALLOWED_CLIENT_IDS` co the la danh sach phan tach bang dau phay neu ban dung nhieu client ID cho local va production.

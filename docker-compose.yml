@@ -46,6 +46,8 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sampledb}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-sample}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-samplepass}
+      APP_ALLOWED_ORIGINS: ${APP_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173,http://localhost:18080,http://127.0.0.1:18080}
+      GOOGLE_ALLOWED_CLIENT_IDS: ${GOOGLE_ALLOWED_CLIENT_IDS:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,6 +65,10 @@ services:
       context: ./sample-web
     container_name: react-web
     restart: unless-stopped
+    environment:
+      VITE_APP_NAME: ${VITE_APP_NAME:-Sổ Chi Tiêu}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-/api}
+      VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
     depends_on:
       spring-api:
         condition: service_started
