@@ -9,10 +9,14 @@ import com.aihost.expensemanager.auth.service.JwtService;
 import com.aihost.expensemanager.user.entity.AppUser;
 import com.aihost.expensemanager.user.mapper.UserMapper;
 import com.aihost.expensemanager.user.service.UserService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthServiceImpl implements AuthService {
+
+  private static final Logger log = LoggerFactory.getLogger(AuthServiceImpl.class);
 
   private final GoogleTokenVerifierService googleTokenVerifierService;
   private final UserService userService;
@@ -34,7 +38,20 @@ public class AuthServiceImpl implements AuthService {
   @Override
   public AuthResponse loginWithGoogle(GoogleLoginRequest request) {
     GoogleUserProfile profile = googleTokenVerifierService.verify(request.credential());
+    log.info(
+      "Google token verified successfully: email={}, emailVerified={}, subject={}",
+      profile.email(),
+      profile.emailVerified(),
+      profile.subject()
+    );
     AppUser user = userService.syncGoogleUser(profile);
+    log.info(
+      "User synced after Google login: userId={}, email={}, role={}, active={}",
+      user.getId(),
+      user.getEmail(),
+      user.getRole(),
+      user.isActive()
+    );
     String accessToken = jwtService.generateToken(user);
 
     return new AuthResponse(

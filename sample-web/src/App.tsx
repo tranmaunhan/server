@@ -55,8 +55,18 @@ export default function App() {
 
   useEffect(() => {
     if (!config.googleClientId) {
+      console.warn("[auth] missing Google client id in runtime config", {
+        origin: window.location.origin,
+        apiBaseUrl: config.apiBaseUrl
+      });
       return;
     }
+
+    console.info("[auth] runtime config loaded", {
+      origin: window.location.origin,
+      apiBaseUrl: config.apiBaseUrl,
+      googleClientIdPreview: maskValue(config.googleClientId)
+    });
 
     let cancelled = false;
     loadGoogleScript()
@@ -88,6 +98,7 @@ export default function App() {
           setError("Google khong tra ve token dang nhap.");
           return;
         }
+        console.info("[auth] received Google credential", summarizeGoogleCredential(response.credential));
         await handleGoogleLogin(response.credential);
       }
     });
@@ -175,6 +186,11 @@ export default function App() {
     setMessage("Dang xac thuc tai khoan Google...");
 
     try {
+      console.info("[auth] sending Google credential to backend", {
+        apiBaseUrl: config.apiBaseUrl,
+        loginUrl: `${config.apiBaseUrl}/auth/google`,
+        credential: summarizeGoogleCredential(credential)
+      });
       const response = await api.loginWithGoogle(credential);
       saveToken(response.accessToken);
       saveUser(JSON.stringify(response.user));
@@ -281,6 +297,7 @@ export default function App() {
   }
 
   function handleApiError(errorValue: unknown) {
+    console.error("[app] api error", errorValue);
     const nextMessage = errorValue instanceof Error ? errorValue.message : "Da co loi xay ra.";
     setError(nextMessage);
   }
@@ -993,6 +1010,46 @@ function loadGoogleScript() {
     script.onerror = () => reject(new Error("Khong tai duoc Google script"));
     document.head.appendChild(script);
   });
+}
+
+function summarizeGoogleCredential(credential: string) {
+  const payload = parseJwtPayload(credential);
+  return {
+    length: credential.length,
+    aud: payload?.aud ?? null,
+    iss: payload?.iss ?? null,
+    email: payload?.email ?? null,
+    sub: maskValue(payload?.sub),
+    exp: payload?.exp ?? null
+  };
+}
+
+function parseJwtPayload(token: string): Record<string, unknown> | null {
+  const parts = token.split(".");
+  if (parts.length < 2) {
+    return null;
+  }
+
+  try {
+    const normalized = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
+    const decoded = window.atob(padded);
+    return JSON.parse(decoded) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function maskValue(value: unknown) {
+  if (typeof value !== "string" || !value) {
+    return null;
+  }
+
+  if (value.length <= 8) {
+    return value;
+  }
+
+  return `${value.slice(0, 4)}...${value.slice(-4)}`;
 }
 
 function fallbackAvatar(name: string) {

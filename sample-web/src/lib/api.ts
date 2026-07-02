@@ -11,6 +11,18 @@ import type {
   UserRole
 } from "../types";
 
+class ApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly url: string,
+    readonly payload: unknown
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 export class ApiClient {
   constructor(
     private readonly baseUrl: string,
@@ -99,12 +111,14 @@ export class ApiClient {
   private async request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const token = this.getToken();
     const headers = new Headers(init.headers);
+    const method = init.method || "GET";
+    const url = `${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
     headers.set("Content-Type", "application/json");
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
 
-    const response = await fetch(`${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`, {
+    const response = await fetch(url, {
       ...init,
       headers
     });
@@ -115,7 +129,28 @@ export class ApiClient {
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(payload.message || "Yeu cau that bai.");
+      console.error("[api] request failed", {
+        method,
+        url,
+        status: response.status,
+        payload
+      });
+      throw new ApiError(
+        payload.message || `Yeu cau that bai. (${response.status})`,
+        response.status,
+        url,
+        payload
+      );
+    }
+
+    if (path === "/auth/google") {
+      console.info("[api] google login response", {
+        method,
+        url,
+        status: response.status,
+        userId: (payload as Partial<AuthResponse>)?.user?.id,
+        email: (payload as Partial<AuthResponse>)?.user?.email
+      });
     }
 
     return payload as T;
