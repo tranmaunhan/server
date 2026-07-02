@@ -34,11 +34,7 @@ export function ExpenseItem({
                 loading="lazy"
                 src={expense.imageUrl}
               />
-              <p>
-                <a href={expense.imageUrl} rel="noreferrer" target="_blank">
-                  Xem ảnh hóa đơn
-                </a>
-              </p>
+            
             </>
           )}
         </div>
