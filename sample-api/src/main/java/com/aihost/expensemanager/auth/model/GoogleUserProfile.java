@@ -5,7 +5,6 @@ public record GoogleUserProfile(
   String email,
   boolean emailVerified,
   String fullName,
-  String avatarUrl,
-  String locale
+  String avatarUrl
 ) {
 }

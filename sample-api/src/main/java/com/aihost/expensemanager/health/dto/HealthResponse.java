@@ -1,12 +1,13 @@
 package com.aihost.expensemanager.health.dto;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public record HealthResponse(
   boolean ok,
   String service,
   String database,
-  long registeredUsers,
-  Instant time
+  long totalUsers,
+  long totalExpenses,
+  LocalDateTime time
 ) {
 }

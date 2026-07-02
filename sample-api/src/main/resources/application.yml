@@ -1,20 +1,24 @@
 spring:
   application:
-    name: expense-api
+    name: family-expense-api
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/sampledb}
     username: ${SPRING_DATASOURCE_USERNAME:sample}
     password: ${SPRING_DATASOURCE_PASSWORD:samplepass}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     open-in-view: false
     properties:
       hibernate:
         format_sql: true
+        jdbc:
+          time_zone: Asia/Ho_Chi_Minh
   jackson:
     serialization:
       indent-output: true
+  flyway:
+    enabled: true
 
 server:
   port: ${SERVER_PORT:8080}
@@ -25,6 +29,10 @@ app:
   google:
     allowed-client-ids: ${GOOGLE_ALLOWED_CLIENT_IDS:}
     jwk-set-uri: ${GOOGLE_JWK_SET_URI:https://www.googleapis.com/oauth2/v3/certs}
+  jwt:
+    secret: ${APP_JWT_SECRET:change-me-to-a-long-random-secret-key}
+    expiration-minutes: ${APP_JWT_EXPIRATION_MINUTES:10080}
+    issuer: ${APP_JWT_ISSUER:family-expense-api}
 
 management:
   endpoints:

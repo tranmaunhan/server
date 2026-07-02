@@ -1,11 +1,14 @@
 package com.aihost.expensemanager.user.service.impl;
 
 import com.aihost.expensemanager.auth.model.GoogleUserProfile;
-import com.aihost.expensemanager.common.exception.BadRequestException;
+import com.aihost.expensemanager.common.exception.ForbiddenException;
+import com.aihost.expensemanager.common.exception.NotFoundException;
+import com.aihost.expensemanager.security.CurrentUser;
 import com.aihost.expensemanager.user.entity.AppUser;
+import com.aihost.expensemanager.user.enums.UserRole;
 import com.aihost.expensemanager.user.repository.AppUserRepository;
 import com.aihost.expensemanager.user.service.UserService;
-import java.time.Instant;
+import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,31 +24,67 @@ public class UserServiceImpl implements UserService {
   @Override
   @Transactional
   public AppUser syncGoogleUser(GoogleUserProfile profile) {
-    if (profile.email() == null || profile.email().isBlank()) {
-      throw new BadRequestException("Tai khoan Google khong tra ve email hop le.");
-    }
-
-    String normalizedEmail = profile.email().trim().toLowerCase();
-
-    AppUser user = appUserRepository.findByGoogleSubject(profile.subject())
-      .or(() -> appUserRepository.findByEmailIgnoreCase(normalizedEmail))
+    AppUser user = appUserRepository.findByGoogleId(profile.subject())
+      .or(() -> appUserRepository.findByEmailIgnoreCase(profile.email()))
       .orElseGet(AppUser::new);
 
-    user.setGoogleSubject(profile.subject());
-    user.setEmail(normalizedEmail);
-    user.setFullName(defaultText(profile.fullName(), profile.email()));
+    if (user.getId() != null && !user.isActive()) {
+      throw new ForbiddenException("Tai khoan cua ban dang bi khoa.");
+    }
+
+    if (user.getId() == null) {
+      user.setRole(appUserRepository.count() == 0 ? UserRole.ADMIN : UserRole.MEMBER);
+      user.setActive(true);
+    }
+
+    user.setGoogleId(profile.subject());
+    user.setEmail(profile.email().trim().toLowerCase());
+    user.setFullName(profile.fullName() == null || profile.fullName().isBlank() ? profile.email() : profile.fullName().trim());
     user.setAvatarUrl(profile.avatarUrl());
-    user.setLocale(defaultText(profile.locale(), "vi"));
-    user.setEmailVerified(profile.emailVerified());
-    user.setLastLoginAt(Instant.now());
 
     return appUserRepository.save(user);
   }
 
-  private String defaultText(String value, String fallback) {
-    if (value == null || value.isBlank()) {
-      return fallback;
+  @Override
+  @Transactional(readOnly = true)
+  public AppUser getCurrentUser(CurrentUser currentUser) {
+    return appUserRepository.findById(currentUser.id())
+      .orElseThrow(() -> new NotFoundException("Khong tim thay nguoi dung hien tai."));
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public AppUser getActiveUserById(Long id) {
+    AppUser user = appUserRepository.findById(id)
+      .orElseThrow(() -> new NotFoundException("Khong tim thay thanh vien."));
+
+    if (!user.isActive()) {
+      throw new ForbiddenException("Thanh vien da bi khoa.");
     }
-    return value.trim();
+    return user;
+  }
+
+  @Override
+  @Transactional(readOnly = true)
+  public List<AppUser> getAllUsers() {
+    return appUserRepository.findAllByOrderByFullNameAsc();
+  }
+
+  @Override
+  @Transactional
+  public AppUser updateRole(Long userId, UserRole role) {
+    AppUser user = appUserRepository.findById(userId)
+      .orElseThrow(() -> new NotFoundException("Khong tim thay thanh vien."));
+    user.setRole(role);
+    return appUserRepository.save(user);
+  }
+
+  @Override
+  @Transactional
+  public AppUser updateActiveStatus(Long userId, boolean active) {
+    AppUser user = appUserRepository.findById(userId)
+      .orElseThrow(() -> new NotFoundException("Khong tim thay thanh vien."));
+    user.setActive(active);
+    return appUserRepository.save(user);
   }
 }

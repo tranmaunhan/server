@@ -1,16 +1,16 @@
 package com.aihost.expensemanager.user.dto;
 
-import java.time.Instant;
+import com.aihost.expensemanager.user.enums.UserRole;
+import java.time.LocalDateTime;
 
 public record UserResponse(
   Long id,
   String email,
   String fullName,
   String avatarUrl,
-  String locale,
-  boolean emailVerified,
-  Instant createdAt,
-  Instant updatedAt,
-  Instant lastLoginAt
+  UserRole role,
+  boolean active,
+  LocalDateTime createdAt,
+  LocalDateTime updatedAt
 ) {
 }

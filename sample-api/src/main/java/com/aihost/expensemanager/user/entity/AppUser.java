@@ -1,62 +1,63 @@
 package com.aihost.expensemanager.user.entity;
 
+import com.aihost.expensemanager.user.enums.UserRole;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 @Entity
-@Table(name = "app_users")
+@Table(name = "users")
 public class AppUser {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @Column(nullable = false, unique = true, length = 120)
-  private String googleSubject;
+  @Column(name = "google_id", nullable = false, unique = true, length = 120)
+  private String googleId;
 
   @Column(nullable = false, unique = true, length = 160)
   private String email;
 
-  @Column(nullable = false, length = 160)
+  @Column(name = "full_name", nullable = false, length = 160)
   private String fullName;
 
-  @Column(length = 500)
+  @Column(name = "avatar_url", length = 500)
   private String avatarUrl;
 
-  @Column(length = 32)
-  private String locale;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 20)
+  private UserRole role;
 
-  @Column(nullable = false)
-  private boolean emailVerified;
+  @Column(name = "is_active", nullable = false)
+  private boolean active = true;
 
   @CreationTimestamp
-  @Column(nullable = false, updatable = false)
-  private Instant createdAt;
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private LocalDateTime createdAt;
 
   @UpdateTimestamp
-  @Column(nullable = false)
-  private Instant updatedAt;
-
-  @Column
-  private Instant lastLoginAt;
+  @Column(name = "updated_at", nullable = false)
+  private LocalDateTime updatedAt;
 
   public Long getId() {
     return id;
   }
 
-  public String getGoogleSubject() {
-    return googleSubject;
+  public String getGoogleId() {
+    return googleId;
   }
 
-  public void setGoogleSubject(String googleSubject) {
-    this.googleSubject = googleSubject;
+  public void setGoogleId(String googleId) {
+    this.googleId = googleId;
   }
 
   public String getEmail() {
@@ -83,35 +84,27 @@ public class AppUser {
     this.avatarUrl = avatarUrl;
   }
 
-  public String getLocale() {
-    return locale;
+  public UserRole getRole() {
+    return role;
   }
 
-  public void setLocale(String locale) {
-    this.locale = locale;
+  public void setRole(UserRole role) {
+    this.role = role;
   }
 
-  public boolean isEmailVerified() {
-    return emailVerified;
+  public boolean isActive() {
+    return active;
   }
 
-  public void setEmailVerified(boolean emailVerified) {
-    this.emailVerified = emailVerified;
+  public void setActive(boolean active) {
+    this.active = active;
   }
 
-  public Instant getCreatedAt() {
+  public LocalDateTime getCreatedAt() {
     return createdAt;
   }
 
-  public Instant getUpdatedAt() {
+  public LocalDateTime getUpdatedAt() {
     return updatedAt;
-  }
-
-  public Instant getLastLoginAt() {
-    return lastLoginAt;
-  }
-
-  public void setLastLoginAt(Instant lastLoginAt) {
-    this.lastLoginAt = lastLoginAt;
   }
 }

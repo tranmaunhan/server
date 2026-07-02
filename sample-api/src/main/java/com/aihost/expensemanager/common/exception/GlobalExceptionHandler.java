@@ -2,10 +2,11 @@ package com.aihost.expensemanager.common.exception;
 
 import com.aihost.expensemanager.common.dto.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.oauth2.jwt.JwtException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -33,10 +34,28 @@ public class GlobalExceptionHandler {
     return build(HttpStatus.BAD_REQUEST, exception.getMessage(), request);
   }
 
-  @ExceptionHandler(JwtException.class)
+  @ExceptionHandler(NotFoundException.class)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  ErrorResponse handleNotFound(NotFoundException exception, HttpServletRequest request) {
+    return build(HttpStatus.NOT_FOUND, exception.getMessage(), request);
+  }
+
+  @ExceptionHandler(ForbiddenException.class)
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  ErrorResponse handleForbidden(ForbiddenException exception, HttpServletRequest request) {
+    return build(HttpStatus.FORBIDDEN, exception.getMessage(), request);
+  }
+
+  @ExceptionHandler({UnauthorizedException.class, AuthenticationException.class})
   @ResponseStatus(HttpStatus.UNAUTHORIZED)
-  ErrorResponse handleJwt(JwtException exception, HttpServletRequest request) {
-    return build(HttpStatus.UNAUTHORIZED, "Google token khong hop le hoac da het han.", request);
+  ErrorResponse handleUnauthorized(Exception exception, HttpServletRequest request) {
+    return build(HttpStatus.UNAUTHORIZED, exception.getMessage(), request);
+  }
+
+  @ExceptionHandler(AccessDeniedException.class)
+  @ResponseStatus(HttpStatus.FORBIDDEN)
+  ErrorResponse handleAccessDenied(AccessDeniedException exception, HttpServletRequest request) {
+    return build(HttpStatus.FORBIDDEN, "Ban khong du quyen thuc hien thao tac nay.", request);
   }
 
   @ExceptionHandler(Exception.class)
@@ -51,7 +70,7 @@ public class GlobalExceptionHandler {
 
   private ErrorResponse build(HttpStatus status, String message, HttpServletRequest request) {
     return new ErrorResponse(
-      Instant.now(),
+      LocalDateTime.now(),
       status.value(),
       status.getReasonPhrase(),
       message,

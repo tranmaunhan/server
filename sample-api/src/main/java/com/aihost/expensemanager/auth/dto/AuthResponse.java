@@ -1,12 +1,12 @@
 package com.aihost.expensemanager.auth.dto;
 
 import com.aihost.expensemanager.user.dto.UserResponse;
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 public record AuthResponse(
-  String provider,
-  String message,
-  Instant authenticatedAt,
+  String accessToken,
+  String tokenType,
+  LocalDateTime expiresAt,
   UserResponse user
 ) {
 }
