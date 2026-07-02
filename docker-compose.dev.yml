@@ -3,6 +3,8 @@ services:
     build:
       context: ./sample-api
     image: sample-spring-api:dev
+    ports:
+      - "8080:8080"
 
   react-web:
     build:
