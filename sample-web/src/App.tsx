@@ -604,9 +604,9 @@ function HomeTab({
 }) {
   return (
     <div className="tab-stack">
-      <section className="hero-card">
+      <section className="hero-card home-hero-card">
         <div className="hero-row">
-          <div>
+          <div className="hero-copy">
             <p className="hero-subtitle">Xin chào, {user.fullName}</p>
             <h2>Thêm khoản chi trong dưới 20 giây</h2>
             <p>
@@ -630,8 +630,8 @@ function HomeTab({
         />
       </section>
 
-      <section className="panel-card">
-        <div className="panel-heading">
+      <section className="panel-card compact-panel">
+        <div className="panel-heading compact-heading">
           <div>
             <p className="eyebrow">Gần đây</p>
             <h3>Khoản chi mới nhất</h3>
@@ -663,8 +663,8 @@ function ExpensesTab({
 }) {
   return (
     <div className="tab-stack">
-      <section className="panel-card">
-        <div className="panel-heading">
+      <section className="panel-card compact-panel">
+        <div className="panel-heading compact-heading">
           <div>
             <p className="eyebrow">Dòng thời gian</p>
             <h3>Danh sách khoản chi</h3>
@@ -710,8 +710,8 @@ function ReportsTab({
 }) {
   return (
     <div className="tab-stack">
-      <section className="panel-card">
-        <div className="panel-heading">
+      <section className="panel-card compact-panel">
+        <div className="panel-heading compact-heading">
           <div>
             <p className="eyebrow">Báo cáo tháng</p>
             <h3>Tổng hợp thanh toán và phân bổ chi phí</h3>
@@ -736,10 +736,12 @@ function ReportsTab({
         <div className="list-stack">
           {report?.members.map((member) => (
             <article className="member-balance-card" key={member.userId}>
-              <div>
+              <div className="member-balance-main">
                 <strong>{member.fullName}</strong>
-                <p>Đã thanh toán: {formatCurrency(member.paidAmount)}</p>
-                <p>Phải chịu: {formatCurrency(member.shareAmount)}</p>
+                <div className="inline-meta">
+                  <p>Đã thanh toán: {formatCurrency(member.paidAmount)}</p>
+                  <p>Phải chịu: {formatCurrency(member.shareAmount)}</p>
+                </div>
               </div>
               <span className={member.balance >= 0 ? "balance-pill positive" : "balance-pill negative"}>
                 {member.balance >= 0 ? "+" : ""}
@@ -750,8 +752,8 @@ function ReportsTab({
         </div>
       </section>
 
-      <section className="panel-card">
-        <div className="panel-heading">
+      <section className="panel-card compact-panel">
+        <div className="panel-heading compact-heading">
           <div>
             <p className="eyebrow">Gợi ý chuyển tiền</p>
             <h3>Kết quả quyết toán cuối tháng</h3>
@@ -775,8 +777,8 @@ function ReportsTab({
         </div>
       </section>
 
-      <section className="panel-card">
-        <div className="panel-heading">
+      <section className="panel-card compact-panel">
+        <div className="panel-heading compact-heading">
           <div>
             <p className="eyebrow">Danh sách quyết toán</p>
             <h3>Theo dõi trạng thái thanh toán</h3>
@@ -786,11 +788,11 @@ function ReportsTab({
         <div className="list-stack">
           {settlements.map((settlement) => (
             <article className="settlement-card" key={settlement.id}>
-              <div>
+              <div className="settlement-main">
                 <strong>
                   {settlement.fromUserName} → {settlement.toUserName}
                 </strong>
-                <p>{formatCurrency(settlement.amount)}</p>
+                <p className="settlement-amount-text">{formatCurrency(settlement.amount)}</p>
               </div>
               <button
                 className={settlement.status === "PAID" ? "secondary-button paid" : "secondary-button"}

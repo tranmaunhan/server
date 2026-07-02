@@ -240,6 +240,10 @@ button {
   padding: 20px;
 }
 
+.compact-panel {
+  gap: 14px;
+}
+
 .hero-row,
 .panel-heading,
 .expense-main,
@@ -256,6 +260,14 @@ button {
   gap: 12px;
 }
 
+.compact-heading {
+  align-items: flex-start;
+}
+
+.compact-heading .eyebrow {
+  margin-bottom: 6px;
+}
+
 .metrics-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -269,13 +281,13 @@ button {
 .metric-card span {
   display: block;
   color: #5f7a71;
-  font-size: 0.9rem;
+  font-size: 0.84rem;
 }
 
 .metric-card strong {
   display: block;
-  margin-top: 10px;
-  font-size: 1.1rem;
+  margin-top: 8px;
+  font-size: 1.05rem;
   color: #0e4037;
 }
 
@@ -334,6 +346,40 @@ button {
 .member-balance-card p,
 .member-admin-card p {
   margin: 6px 0 0;
+}
+
+.home-hero-card {
+  gap: 14px;
+}
+
+.hero-copy {
+  display: grid;
+  gap: 8px;
+}
+
+.hero-copy p:last-child {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.member-balance-main,
+.settlement-main {
+  display: grid;
+  gap: 6px;
+}
+
+.inline-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: #5f7a71;
+  font-size: 0.9rem;
+}
+
+.settlement-amount-text {
+  margin: 0;
+  color: #31594f;
+  font-weight: 600;
 }
 
 .expense-amount {
@@ -736,6 +782,34 @@ button {
 
   .topbar {
     padding-inline: 14px;
+  }
+
+  .compact-heading .eyebrow,
+  .hero-copy p:last-child {
+    display: none;
+  }
+
+  .metric-card {
+    padding: 16px;
+  }
+
+  .metric-card strong {
+    font-size: 1rem;
+  }
+
+  .expense-card,
+  .member-balance-card,
+  .settlement-card,
+  .settlement-suggestion-card {
+    padding: 16px;
+  }
+
+  .list-stack {
+    gap: 12px;
+  }
+
+  .inline-meta {
+    font-size: 0.86rem;
   }
 
   .hero-row,

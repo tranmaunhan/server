@@ -24,17 +24,14 @@ public class UserServiceImpl implements UserService {
   @Override
   @Transactional
   public AppUser syncGoogleUser(GoogleUserProfile profile) {
+    boolean firstUser = appUserRepository.count() == 0;
     AppUser user = appUserRepository.findByGoogleId(profile.subject())
       .or(() -> appUserRepository.findByEmailIgnoreCase(profile.email()))
       .orElseGet(AppUser::new);
 
-    if (user.getId() != null && !user.isActive()) {
-      throw new ForbiddenException("Tai khoan cua ban dang bi khoa.");
-    }
-
     if (user.getId() == null) {
-      user.setRole(appUserRepository.count() == 0 ? UserRole.ADMIN : UserRole.MEMBER);
-      user.setActive(true);
+      user.setRole(firstUser ? UserRole.ADMIN : UserRole.MEMBER);
+      user.setActive(firstUser);
     }
 
     user.setGoogleId(profile.subject());
@@ -42,7 +39,13 @@ public class UserServiceImpl implements UserService {
     user.setFullName(profile.fullName() == null || profile.fullName().isBlank() ? profile.email() : profile.fullName().trim());
     user.setAvatarUrl(profile.avatarUrl());
 
-    return appUserRepository.save(user);
+    AppUser savedUser = appUserRepository.save(user);
+
+    if (!savedUser.isActive()) {
+      throw new ForbiddenException("Tài khoản của bạn đang chờ quản trị viên kích hoạt.");
+    }
+
+    return savedUser;
   }
 
   @Override
