@@ -3,7 +3,6 @@ const fsSync = require("node:fs");
 const fs = require("node:fs/promises");
 const http = require("node:http");
 const https = require("node:https");
-const net = require("node:net");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
 const express = require("express");
@@ -38,6 +37,10 @@ const state = {
   apps: new Map(),
   routes: new Map(),
   deployBusy: false,
+  composeRunner: null,
+  deployQueue: [],
+  jobs: new Map(),
+  jobOrder: [],
 };
 
 main().catch((error) => {
@@ -84,6 +87,7 @@ async function main() {
     res.json({
       ok: true,
       busy: state.deployBusy,
+      queueLength: state.deployQueue.length,
       appCount: state.apps.size,
       routeCount: state.routes.size,
       composeProjectDir: COMPOSE_PROJECT_DIR,
@@ -108,55 +112,29 @@ async function main() {
       throw httpError(404, "serviceName is not allowlisted");
     }
 
-    if (state.deployBusy) {
-      throw httpError(409, "another deployment is already running");
-    }
+    const job = enqueueDeployJob(appConfig);
+    processDeployQueue().catch((error) => {
+      console.error(`background deploy queue failed: ${error.message}`);
+    });
 
-    const startedAt = Date.now();
-    state.deployBusy = true;
-    try {
-      const pullResult = await runCompose(["pull", appConfig.composeService], {
-        timeoutMs: 10 * 60 * 1000,
-        stdio: "inherit",
-      });
-      const upResult = await runCompose(["up", "-d", appConfig.composeService], {
-        timeoutMs: 5 * 60 * 1000,
-        stdio: "inherit",
-      });
-      const health = await runHealthCheck(appConfig);
-      const record = {
-        time: new Date().toISOString(),
-        ok: true,
-        serviceName: appConfig.serviceName,
-        composeService: appConfig.composeService,
-        displayName: appConfig.displayName,
-        durationMs: Date.now() - startedAt,
-        health,
-      };
-      await writeAudit(record);
-      res.json({
-        ok: true,
-        serviceName: appConfig.serviceName,
-        composeService: appConfig.composeService,
-        durationMs: record.durationMs,
-        health,
-        pull: summarizeCommandResult(pullResult),
-        up: summarizeCommandResult(upResult),
-      });
-    } catch (error) {
-      await writeAudit({
-        time: new Date().toISOString(),
-        ok: false,
-        serviceName: appConfig.serviceName,
-        composeService: appConfig.composeService,
-        durationMs: Date.now() - startedAt,
-        error: error.message,
-      });
-      throw error;
-    } finally {
-      state.deployBusy = false;
-    }
+    res.status(202).json({
+      ok: true,
+      accepted: true,
+      jobId: job.id,
+      serviceName: job.serviceName,
+      composeService: job.composeService,
+      status: job.status,
+      queueLength: state.deployQueue.length,
+    });
   }));
+
+  app.get("/jobs/:id", requireDeployToken, (req, res) => {
+    const job = state.jobs.get(req.params.id);
+    if (!job) {
+      throw httpError(404, "job not found");
+    }
+    res.json({ ok: true, job: publicJobView(job) });
+  });
 
   app.get("/admin/apps", requireAdminToken, (_req, res) => {
     res.json({ apps: sortedApps() });
@@ -405,6 +383,10 @@ async function main() {
   app.get("/admin/deployments", requireAdminToken, asyncHandler(async (_req, res) => {
     res.json({ deployments: await readAuditLog() });
   }));
+
+  app.get("/admin/jobs", requireAdminToken, (_req, res) => {
+    res.json({ jobs: listJobs() });
+  });
 
   app.use((error, _req, res, _next) => {
     const status = error.statusCode || 500;
@@ -725,6 +707,144 @@ function publicAppView(appConfig) {
   };
 }
 
+function enqueueDeployJob(appConfig) {
+  const job = {
+    id: crypto.randomUUID(),
+    serviceName: appConfig.serviceName,
+    composeService: appConfig.composeService,
+    displayName: appConfig.displayName,
+    status: state.deployBusy ? "queued" : "queued",
+    requestedAt: new Date().toISOString(),
+    startedAt: null,
+    finishedAt: null,
+    durationMs: null,
+    error: null,
+    health: null,
+    pull: null,
+    up: null,
+  };
+
+  state.jobs.set(job.id, job);
+  state.jobOrder.push(job.id);
+  state.deployQueue.push(job.id);
+  trimStoredJobs();
+  return job;
+}
+
+async function processDeployQueue() {
+  if (state.deployBusy) {
+    return;
+  }
+
+  const nextJobId = state.deployQueue.shift();
+  if (!nextJobId) {
+    return;
+  }
+
+  const job = state.jobs.get(nextJobId);
+  if (!job) {
+    return processDeployQueue();
+  }
+
+  state.deployBusy = true;
+  job.status = "running";
+  job.startedAt = new Date().toISOString();
+
+  try {
+    const startedAt = Date.now();
+    const pullResult = await runCompose(["pull", job.composeService], {
+      timeoutMs: 10 * 60 * 1000,
+      stdio: "inherit",
+    });
+    const upResult = await runCompose(["up", "-d", job.composeService], {
+      timeoutMs: 5 * 60 * 1000,
+      stdio: "inherit",
+    });
+    const appConfig = state.apps.get(job.serviceName);
+    if (!appConfig) {
+      throw httpError(500, `service "${job.serviceName}" no longer exists in whitelist`);
+    }
+    const health = await runHealthCheck(appConfig);
+
+    job.finishedAt = new Date().toISOString();
+    job.durationMs = Date.now() - startedAt;
+    job.status = "completed";
+    job.health = health;
+    job.pull = summarizeCommandResult(pullResult);
+    job.up = summarizeCommandResult(upResult);
+
+    await writeAudit({
+      time: job.finishedAt,
+      ok: true,
+      jobId: job.id,
+      serviceName: job.serviceName,
+      composeService: job.composeService,
+      displayName: job.displayName,
+      durationMs: job.durationMs,
+      health,
+    });
+  } catch (error) {
+    job.finishedAt = new Date().toISOString();
+    job.durationMs = job.startedAt ? (Date.now() - Date.parse(job.startedAt)) : null;
+    job.status = "failed";
+    job.error = error.message;
+
+    await writeAudit({
+      time: job.finishedAt,
+      ok: false,
+      jobId: job.id,
+      serviceName: job.serviceName,
+      composeService: job.composeService,
+      displayName: job.displayName,
+      durationMs: job.durationMs,
+      error: error.message,
+    });
+  } finally {
+    state.deployBusy = false;
+    if (state.deployQueue.length > 0) {
+      setImmediate(() => {
+        processDeployQueue().catch((error) => {
+          console.error(`background deploy queue failed: ${error.message}`);
+        });
+      });
+    }
+  }
+}
+
+function publicJobView(job) {
+  return {
+    id: job.id,
+    serviceName: job.serviceName,
+    composeService: job.composeService,
+    displayName: job.displayName,
+    status: job.status,
+    requestedAt: job.requestedAt,
+    startedAt: job.startedAt,
+    finishedAt: job.finishedAt,
+    durationMs: job.durationMs,
+    error: job.error,
+    health: job.health,
+    pull: job.pull,
+    up: job.up,
+  };
+}
+
+function listJobs() {
+  return [...state.jobOrder]
+    .map((jobId) => state.jobs.get(jobId))
+    .filter(Boolean)
+    .reverse()
+    .map((job) => publicJobView(job));
+}
+
+function trimStoredJobs() {
+  const maxJobs = 200;
+  while (state.jobOrder.length > maxJobs) {
+    const oldestJobId = state.jobOrder.shift();
+    state.jobs.delete(oldestJobId);
+  }
+}
+
 function routeReferencesService(serviceName) {
   for (const route of state.routes.values()) {
     if (route.serviceName === serviceName) {
@@ -869,22 +989,69 @@ async function readAuditLog() {
   }
 }
 
-function runCompose(args, options = {}) {
-  const composeArgs = [
-    "compose",
-    "--project-directory", COMPOSE_PROJECT_DIR,
-    "-f", COMPOSE_FILE_PATH,
-  ];
+async function runCompose(args, options = {}) {
+  const runner = await resolveComposeRunner();
+  const composeArgs = [...runner.baseArgs];
 
-  if (COMPOSE_ENV_FILE) {
-    composeArgs.push("--env-file", COMPOSE_ENV_FILE);
+  if (runner.mode === "docker-compose") {
+    composeArgs.push("--project-directory", COMPOSE_PROJECT_DIR);
+    composeArgs.push("-f", COMPOSE_FILE_PATH);
+    if (COMPOSE_ENV_FILE) {
+      composeArgs.push("--env-file", COMPOSE_ENV_FILE);
+    }
+  } else {
+    composeArgs.push("--project-directory", COMPOSE_PROJECT_DIR);
+    composeArgs.push("-f", COMPOSE_FILE_PATH);
+    if (COMPOSE_ENV_FILE) {
+      composeArgs.push("--env-file", COMPOSE_ENV_FILE);
+    }
   }
 
   composeArgs.push(...args);
-  return runCommand("docker", composeArgs, {
+
+  return runCommand(runner.command, composeArgs, {
     cwd: COMPOSE_PROJECT_DIR,
     ...options,
   });
+}
+
+async function resolveComposeRunner() {
+  if (state.composeRunner) {
+    return state.composeRunner;
+  }
+
+  try {
+    await runCommand("docker", ["compose", "version"], {
+      capture: true,
+      timeoutMs: 15_000,
+    });
+    state.composeRunner = {
+      command: "docker",
+      baseArgs: ["compose"],
+      mode: "docker-compose-plugin",
+    };
+    return state.composeRunner;
+  } catch (_error) {
+    // Fall through to docker-compose binary detection.
+  }
+
+  try {
+    await runCommand("docker-compose", ["version"], {
+      capture: true,
+      timeoutMs: 15_000,
+    });
+    state.composeRunner = {
+      command: "docker-compose",
+      baseArgs: [],
+      mode: "docker-compose",
+    };
+    return state.composeRunner;
+  } catch (_error) {
+    throw httpError(
+      500,
+      "docker compose is not available inside deploy-manager; install compose plugin or docker-compose binary",
+    );
+  }
 }
 
 async function runCommand(command, args, options = {}) {

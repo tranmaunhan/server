@@ -21,10 +21,12 @@ Moi workflow se:
 
 Deploy Manager se tu:
 
-1. `docker compose pull <serviceName>`
-2. `docker compose up -d <serviceName>`
-3. health check
-4. ghi audit log
+1. tra ngay `202 Accepted` voi `jobId`
+2. dua deploy vao hang doi nen
+3. `docker compose pull <serviceName>`
+4. `docker compose up -d <serviceName>`
+5. health check
+6. ghi audit log
 
 ## GitHub Secrets can tao
 
@@ -104,6 +106,7 @@ API public:
 ```text
 GET https://deploy.aihost.io.vn/deploy/healthz
 GET https://deploy.aihost.io.vn/deploy/apps
+GET https://deploy.aihost.io.vn/deploy/jobs/:jobId
 POST https://deploy.aihost.io.vn/deploy
 ```
 

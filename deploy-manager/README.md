@@ -32,10 +32,12 @@ Deploy Manager duoc thiet ke theo nguyen tac **Build Once, Run Anywhere**:
 
 Khi nhan deploy cho mot `serviceName`, service se:
 
-1. `docker compose pull <composeService>`
-2. `docker compose up -d <composeService>`
-3. health check theo whitelist
-4. ghi audit log JSONL
+1. nhan request va tra ngay `202 Accepted` cung `jobId`
+2. dua job vao hang doi nen
+3. `docker compose pull <composeService>`
+4. `docker compose up -d <composeService>`
+5. health check theo whitelist
+6. ghi audit log JSONL
 
 ## Cau hinh bang env
 
@@ -102,6 +104,7 @@ Tat ca runtime config deu lay tu env:
 Deploy API:
 
 - `POST /deploy`
+- `GET /jobs/:id`
 - `GET /apps`
 - `GET /healthz`
 
@@ -126,6 +129,26 @@ Tat ca API deploy dung:
 
 ```text
 Authorization: Bearer <DEPLOY_TOKEN>
+```
+
+Mau deploy response:
+
+```json
+{
+  "ok": true,
+  "accepted": true,
+  "jobId": "b4a2c6d9-....",
+  "serviceName": "my-api",
+  "composeService": "my-api",
+  "status": "queued"
+}
+```
+
+Kiem tra trang thai job:
+
+```bash
+curl http://your-domain/deploy/jobs/<jobId> \
+  -H "Authorization: Bearer replace-with-a-long-random-token"
 ```
 
 Tat ca admin API/UI dung:
