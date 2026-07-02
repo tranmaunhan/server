@@ -1,6 +1,7 @@
 package com.aihost.expensemanager.expense.service.impl;
 
 import com.aihost.expensemanager.common.exception.BadRequestException;
+import com.aihost.expensemanager.common.exception.ForbiddenException;
 import com.aihost.expensemanager.common.exception.NotFoundException;
 import com.aihost.expensemanager.common.util.MoneyUtils;
 import com.aihost.expensemanager.expense.dto.CreateExpenseRequest;
@@ -53,8 +54,9 @@ public class ExpenseServiceImpl implements ExpenseService {
 
   @Override
   @Transactional
-  public ExpenseResponse update(Long expenseId, UpdateExpenseRequest request) {
+  public ExpenseResponse update(CurrentUser currentUser, Long expenseId, UpdateExpenseRequest request) {
     Expense expense = findActiveExpense(expenseId);
+    assertExpenseOwner(currentUser, expense);
     CurrentUser systemUser = new CurrentUser(expense.getCreatedBy().getId(), expense.getCreatedBy().getEmail(), expense.getCreatedBy().getFullName(), expense.getCreatedBy().getRole());
     fillExpense(expense, systemUser, request.payerId(), request.amount(), request.description(), request.imageUrl(), request.expenseDate(), request.splitType(), request.shares());
     return expenseMapper.toResponse(expenseRepository.save(expense));
@@ -62,8 +64,9 @@ public class ExpenseServiceImpl implements ExpenseService {
 
   @Override
   @Transactional
-  public void cancel(Long expenseId) {
+  public void cancel(CurrentUser currentUser, Long expenseId) {
     Expense expense = findActiveExpense(expenseId);
+    assertExpenseOwner(currentUser, expense);
     expense.setStatus(ExpenseStatus.CANCELLED);
     expenseRepository.save(expense);
   }
@@ -93,6 +96,12 @@ public class ExpenseServiceImpl implements ExpenseService {
   private Expense findActiveExpense(Long expenseId) {
     return expenseRepository.findByIdAndStatus(expenseId, ExpenseStatus.ACTIVE)
       .orElseThrow(() -> new NotFoundException("Khong tim thay khoan chi."));
+  }
+
+  private void assertExpenseOwner(CurrentUser currentUser, Expense expense) {
+    if (currentUser == null || expense.getCreatedBy() == null || !expense.getCreatedBy().getId().equals(currentUser.id())) {
+      throw new ForbiddenException("Ban chi co the sua hoac xoa khoan chi do chinh minh tao.");
+    }
   }
 
   private void fillExpense(

@@ -11,9 +11,9 @@ public interface ExpenseService {
 
   ExpenseResponse create(CurrentUser currentUser, CreateExpenseRequest request);
 
-  ExpenseResponse update(Long expenseId, UpdateExpenseRequest request);
+  ExpenseResponse update(CurrentUser currentUser, Long expenseId, UpdateExpenseRequest request);
 
-  void cancel(Long expenseId);
+  void cancel(CurrentUser currentUser, Long expenseId);
 
   ExpenseResponse getById(Long expenseId);
 

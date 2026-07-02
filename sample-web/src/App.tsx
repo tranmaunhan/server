@@ -510,6 +510,7 @@ export default function App() {
 
         {activeTab === "expenses" && (
           <ExpensesTab
+            currentUser={user}
             expenses={expenses}
             onCreate={openCreateExpense}
             onEdit={openEditExpense}
@@ -636,11 +637,13 @@ function HomeTab({
 }
 
 function ExpensesTab({
+  currentUser,
   expenses,
   onCreate,
   onEdit,
   onDelete
 }: {
+  currentUser: User;
   expenses: Expense[];
   onCreate: () => void;
   onEdit: (expense: Expense) => void;
@@ -663,6 +666,7 @@ function ExpensesTab({
           {expenses.map((expense) => (
             <ExpenseItem
               key={expense.id}
+              canManage={expense.createdById === currentUser.id}
               expense={expense}
               onEdit={() => onEdit(expense)}
               onDelete={() => onDelete(expense.id)}
@@ -1154,11 +1158,13 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 
 function ExpenseItem({
   expense,
+  canManage,
   compact,
   onEdit,
   onDelete
 }: {
   expense: Expense;
+  canManage?: boolean;
   compact?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
@@ -1185,7 +1191,7 @@ function ExpenseItem({
         </div>
         <strong className="expense-amount">{formatCurrency(expense.amount)}</strong>
       </div>
-      {!compact && (
+      {!compact && canManage && (
         <div className="expense-actions">
           <button className="secondary-button" onClick={onEdit} type="button">
             Sửa

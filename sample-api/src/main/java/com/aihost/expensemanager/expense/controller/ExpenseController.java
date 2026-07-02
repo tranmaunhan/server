@@ -46,12 +46,16 @@ public class ExpenseController {
   }
 
   @PutMapping("/{expenseId}")
-  public ExpenseResponse update(@PathVariable Long expenseId, @Valid @RequestBody UpdateExpenseRequest request) {
-    return expenseService.update(expenseId, request);
+  public ExpenseResponse update(
+    @AuthenticationPrincipal CurrentUser currentUser,
+    @PathVariable Long expenseId,
+    @Valid @RequestBody UpdateExpenseRequest request
+  ) {
+    return expenseService.update(currentUser, expenseId, request);
   }
 
   @DeleteMapping("/{expenseId}")
-  public void cancel(@PathVariable Long expenseId) {
-    expenseService.cancel(expenseId);
+  public void cancel(@AuthenticationPrincipal CurrentUser currentUser, @PathVariable Long expenseId) {
+    expenseService.cancel(currentUser, expenseId);
   }
 }
