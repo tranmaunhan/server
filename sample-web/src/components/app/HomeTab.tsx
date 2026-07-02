@@ -1,62 +1,46 @@
-import { fallbackAvatar, formatCurrency } from "../../lib/ui";
+import { formatCurrency } from "../../lib/ui";
 import type { DashboardResponse, User } from "../../types";
 import { ExpenseItem } from "./ExpenseItem";
 
 interface HomeTabProps {
   dashboard: DashboardResponse | null;
-  onAddExpense: () => void;
   user: User;
 }
 
-export function HomeTab({ dashboard, onAddExpense, user }: HomeTabProps) {
+export function HomeTab({ dashboard, user }: HomeTabProps) {
   const monthTotal = dashboard?.monthTotal || 0;
   const todayTotal = dashboard?.todayTotal || 0;
-  const topPayerLabel = dashboard?.topPayerName
-    ? `${dashboard.topPayerName} · ${formatCurrency(dashboard.topPayerAmount)}`
-    : "Chưa có dữ liệu";
+  const expenseCount = dashboard?.monthExpenseCount || 0;
 
   return (
     <div className="tab-stack">
-      <section className="panel-card home-overview-card compact-home-hero">
-        <div className="home-overview-head">
-          <div className="home-overview-copy">
-            <p className="eyebrow">A1.403</p>
-            <h2>Chào {user.fullName}</h2>
+      <section className="panel-card home-overview-card wallet-home-card">
+        <div className="wallet-home-top">
+          <div>
+            <p className="eyebrow">A1.403 Card</p>
+            <h2>{user.fullName}</h2>
           </div>
-          <img
-            alt={user.fullName}
-            className="home-overview-avatar"
-            src={user.avatarUrl || fallbackAvatar(user.fullName)}
-          />
+          <span className="wallet-home-chip">Tháng này</span>
         </div>
 
-        <div className="home-overview-grid">
-          <article className="home-amount-card major">
+        <div className="wallet-home-main">
+          <article className="wallet-home-stat primary">
             <span>Chi tháng này</span>
             <strong>{formatCurrency(monthTotal)}</strong>
           </article>
 
-          <article className="home-amount-card minor">
-            <span>Chi hôm nay</span>
-            <strong>{formatCurrency(todayTotal)}</strong>
-          </article>
+          <div className="wallet-home-side">
+            <article className="wallet-home-stat secondary">
+              <span>Chi hôm nay</span>
+              <strong>{formatCurrency(todayTotal)}</strong>
+            </article>
+
+            <article className="wallet-home-stat secondary">
+              <span>Số khoản chi</span>
+              <strong>{expenseCount}</strong>
+            </article>
+          </div>
         </div>
-
-        <div className="home-insights-grid">
-          <article className="home-insight-pill">
-            <span>Số khoản chi</span>
-            <strong>{dashboard?.monthExpenseCount || 0}</strong>
-          </article>
-
-          <article className="home-insight-pill wide">
-            <span>Người chi nhiều nhất</span>
-            <strong>{topPayerLabel}</strong>
-          </article>
-        </div>
-
-        <button className="primary-button home-cta-button compact" onClick={onAddExpense} type="button">
-          Thêm khoản chi mới
-        </button>
       </section>
 
       <section className="panel-card compact-panel home-recent-panel">

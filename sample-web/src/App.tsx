@@ -521,9 +521,9 @@ export default function App() {
       <StatusLayer error={error} loading={loading} message={message} />
 
       <div className="pull-refresh-shell" style={{ transform: `translateY(${pullOffset}px)` }}>
-        <header className="topbar">
+        <header className={activeTab === "home" ? "topbar home-topbar" : "topbar"}>
           <div>
-            <p className="eyebrow">{config.appName}</p>
+            <p className="eyebrow">{activeTab === "home" ? `Chào, ${user.fullName}` : config.appName}</p>
             <h1>{tabTitle(activeTab)}</h1>
           </div>
           <button className="topbar-avatar" onClick={() => setActiveTab("account")} type="button">
@@ -532,7 +532,7 @@ export default function App() {
         </header>
 
         <section className="screen-content">
-          {activeTab === "home" && <HomeTab dashboard={dashboard} onAddExpense={openCreateExpense} user={user} />}
+          {activeTab === "home" && <HomeTab dashboard={dashboard} user={user} />}
 
           {activeTab === "expenses" && (
             <ExpensesTab
