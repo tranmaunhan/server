@@ -16,6 +16,8 @@ export function ExpenseItem({
   onDelete,
   onEdit
 }: ExpenseItemProps) {
+  const statusText = expense.status === "SETTLED" ? "Đã quyết toán" : null;
+
   return (
     <article className="expense-card">
       <div className="expense-main">
@@ -25,17 +27,15 @@ export function ExpenseItem({
             {expense.payerName} thanh toán · {formatDate(expense.expenseDate)}
           </p>
           <p>{expense.shares.map((share) => `${share.fullName}: ${formatCurrency(share.shareAmount)}`).join(" · ")}</p>
+          {statusText && <p>{statusText}</p>}
           {expense.imageUrl && (
-            <>
-              <img
-                alt="Ảnh hóa đơn"
-                className="expense-receipt-image"
-                decoding="async"
-                loading="lazy"
-                src={expense.imageUrl}
-              />
-            
-            </>
+            <img
+              alt="Ảnh hóa đơn"
+              className="expense-receipt-image"
+              decoding="async"
+              loading="lazy"
+              src={expense.imageUrl}
+            />
           )}
         </div>
         <strong className="expense-amount">{formatCurrency(expense.amount)}</strong>

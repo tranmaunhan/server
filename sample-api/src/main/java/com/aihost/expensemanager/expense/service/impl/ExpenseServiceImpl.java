@@ -21,6 +21,7 @@ import com.aihost.expensemanager.user.service.UserService;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -29,6 +30,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ExpenseServiceImpl implements ExpenseService {
+
+  private static final Set<ExpenseStatus> VISIBLE_STATUSES = EnumSet.of(ExpenseStatus.ACTIVE, ExpenseStatus.SETTLED);
 
   private final ExpenseRepository expenseRepository;
   private final UserService userService;
@@ -48,7 +51,17 @@ public class ExpenseServiceImpl implements ExpenseService {
   @Transactional
   public ExpenseResponse create(CurrentUser currentUser, CreateExpenseRequest request) {
     Expense expense = new Expense();
-    fillExpense(expense, currentUser, request.payerId(), request.amount(), request.description(), request.imageUrl(), request.expenseDate(), request.splitType(), request.shares());
+    fillExpense(
+      expense,
+      currentUser,
+      request.payerId(),
+      request.amount(),
+      request.description(),
+      request.imageUrl(),
+      request.expenseDate(),
+      request.splitType(),
+      request.shares()
+    );
     return expenseMapper.toResponse(expenseRepository.save(expense));
   }
 
@@ -57,8 +70,23 @@ public class ExpenseServiceImpl implements ExpenseService {
   public ExpenseResponse update(CurrentUser currentUser, Long expenseId, UpdateExpenseRequest request) {
     Expense expense = findActiveExpense(expenseId);
     assertExpenseOwner(currentUser, expense);
-    CurrentUser systemUser = new CurrentUser(expense.getCreatedBy().getId(), expense.getCreatedBy().getEmail(), expense.getCreatedBy().getFullName(), expense.getCreatedBy().getRole());
-    fillExpense(expense, systemUser, request.payerId(), request.amount(), request.description(), request.imageUrl(), request.expenseDate(), request.splitType(), request.shares());
+    CurrentUser systemUser = new CurrentUser(
+      expense.getCreatedBy().getId(),
+      expense.getCreatedBy().getEmail(),
+      expense.getCreatedBy().getFullName(),
+      expense.getCreatedBy().getRole()
+    );
+    fillExpense(
+      expense,
+      systemUser,
+      request.payerId(),
+      request.amount(),
+      request.description(),
+      request.imageUrl(),
+      request.expenseDate(),
+      request.splitType(),
+      request.shares()
+    );
     return expenseMapper.toResponse(expenseRepository.save(expense));
   }
 
@@ -74,13 +102,15 @@ public class ExpenseServiceImpl implements ExpenseService {
   @Override
   @Transactional(readOnly = true)
   public ExpenseResponse getById(Long expenseId) {
-    return expenseMapper.toResponse(findActiveExpense(expenseId));
+    return expenseMapper.toResponse(findVisibleExpense(expenseId));
   }
 
   @Override
   @Transactional(readOnly = true)
   public List<ExpenseResponse> getAll() {
-    return expenseMapper.toResponseList(expenseRepository.findAllByStatusOrderByExpenseDateDescCreatedAtDesc(ExpenseStatus.ACTIVE));
+    return expenseMapper.toResponseList(
+      expenseRepository.findAllByStatusInOrderByExpenseDateDescCreatedAtDesc(VISIBLE_STATUSES)
+    );
   }
 
   @Override
@@ -93,14 +123,49 @@ public class ExpenseServiceImpl implements ExpenseService {
     );
   }
 
+  @Override
+  @Transactional(readOnly = true)
+  public List<Expense> getTrackedExpensesInRange(LocalDate startDate, LocalDate endDate) {
+    return expenseRepository.findAllByStatusInAndExpenseDateBetweenOrderByExpenseDateDescCreatedAtDesc(
+      VISIBLE_STATUSES,
+      startDate,
+      endDate
+    );
+  }
+
+  @Override
+  @Transactional
+  public void settleExpensesInRange(LocalDate startDate, LocalDate endDate) {
+    List<Expense> expenses = expenseRepository.findAllByStatusAndExpenseDateBetweenOrderByExpenseDateDescCreatedAtDesc(
+      ExpenseStatus.ACTIVE,
+      startDate,
+      endDate
+    );
+
+    if (expenses.isEmpty()) {
+      return;
+    }
+
+    for (Expense expense : expenses) {
+      expense.setStatus(ExpenseStatus.SETTLED);
+    }
+
+    expenseRepository.saveAll(expenses);
+  }
+
   private Expense findActiveExpense(Long expenseId) {
     return expenseRepository.findByIdAndStatus(expenseId, ExpenseStatus.ACTIVE)
-      .orElseThrow(() -> new NotFoundException("Khong tim thay khoan chi."));
+      .orElseThrow(() -> new NotFoundException("Không tìm thấy khoản chi."));
+  }
+
+  private Expense findVisibleExpense(Long expenseId) {
+    return expenseRepository.findByIdAndStatusIn(expenseId, VISIBLE_STATUSES)
+      .orElseThrow(() -> new NotFoundException("Không tìm thấy khoản chi."));
   }
 
   private void assertExpenseOwner(CurrentUser currentUser, Expense expense) {
     if (currentUser == null || expense.getCreatedBy() == null || !expense.getCreatedBy().getId().equals(currentUser.id())) {
-      throw new ForbiddenException("Ban chi co the sua hoac xoa khoan chi do chinh minh tao.");
+      throw new ForbiddenException("Bạn chỉ có thể sửa hoặc xóa khoản chi do chính mình tạo.");
     }
   }
 
@@ -120,7 +185,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     BigDecimal normalizedAmount = MoneyUtils.normalize(amount);
 
     if (normalizedAmount.signum() <= 0) {
-      throw new BadRequestException("Tong tien phai lon hon 0.");
+      throw new BadRequestException("Tổng tiền phải lớn hơn 0.");
     }
 
     expense.setPayer(payer);
@@ -146,7 +211,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     Set<Long> uniqueUserIds = new HashSet<>();
     for (ExpenseShareRequest request : shareRequests) {
       if (!uniqueUserIds.add(request.userId())) {
-        throw new BadRequestException("Danh sach nguoi chiu tien bi trung lap.");
+        throw new BadRequestException("Danh sách người chịu tiền bị trùng lặp.");
       }
     }
 
@@ -172,12 +237,12 @@ public class ExpenseServiceImpl implements ExpenseService {
     for (int index = 0; index < shareRequests.size(); index++) {
       ExpenseShareRequest request = shareRequests.get(index);
       if (request.shareAmount() == null) {
-        throw new BadRequestException("Kieu chia theo so tien yeu cau nhap shareAmount.");
+        throw new BadRequestException("Kiểu chia theo số tiền yêu cầu nhập shareAmount.");
       }
 
       BigDecimal normalizedShare = MoneyUtils.normalize(request.shareAmount());
       if (normalizedShare.signum() <= 0) {
-        throw new BadRequestException("So tien chia phai lon hon 0.");
+        throw new BadRequestException("Số tiền chia phải lớn hơn 0.");
       }
 
       ExpenseShare share = new ExpenseShare();
@@ -189,7 +254,7 @@ public class ExpenseServiceImpl implements ExpenseService {
     }
 
     if (MoneyUtils.normalize(totalShared).compareTo(amount) != 0) {
-      throw new BadRequestException("Tong so tien chia phai bang tong hoa don.");
+      throw new BadRequestException("Tổng số tiền chia phải bằng tổng hóa đơn.");
     }
 
     return shares;

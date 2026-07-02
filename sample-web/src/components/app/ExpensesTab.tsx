@@ -33,7 +33,7 @@ export function ExpensesTab({
           {expenses.map((expense) => (
             <ExpenseItem
               key={expense.id}
-              canManage={expense.createdById === currentUser.id}
+              canManage={expense.createdById === currentUser.id && expense.status === "ACTIVE"}
               expense={expense}
               onDelete={() => onDelete(expense.id)}
               onEdit={() => onEdit(expense)}

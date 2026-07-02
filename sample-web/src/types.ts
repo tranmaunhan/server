@@ -1,6 +1,6 @@
 export type UserRole = "ADMIN" | "MEMBER";
 export type ExpenseSplitType = "EQUAL" | "AMOUNT";
-export type ExpenseStatus = "ACTIVE" | "CANCELLED";
+export type ExpenseStatus = "ACTIVE" | "SETTLED" | "CANCELLED";
 export type SettlementStatus = "PENDING" | "PAID";
 
 export interface User {

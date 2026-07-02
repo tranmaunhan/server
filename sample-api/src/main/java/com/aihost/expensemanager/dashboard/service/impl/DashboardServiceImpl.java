@@ -38,7 +38,7 @@ public class DashboardServiceImpl implements DashboardService {
     LocalDate monthStart = today.withDayOfMonth(1);
     LocalDate monthEnd = today.withDayOfMonth(today.lengthOfMonth());
 
-    List<Expense> monthExpenses = expenseService.getActiveExpensesInRange(monthStart, monthEnd);
+    List<Expense> monthExpenses = expenseService.getTrackedExpensesInRange(monthStart, monthEnd);
     BigDecimal monthTotal = sumAmounts(monthExpenses);
     BigDecimal todayTotal = monthExpenses.stream()
       .filter(expense -> expense.getExpenseDate().equals(today))

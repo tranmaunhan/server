@@ -1,6 +1,7 @@
 package com.aihost.expensemanager.settlement.service.impl;
 
 import com.aihost.expensemanager.common.exception.NotFoundException;
+import com.aihost.expensemanager.expense.service.ExpenseService;
 import com.aihost.expensemanager.report.dto.MonthlyReportResponse;
 import com.aihost.expensemanager.report.dto.SettlementSuggestionResponse;
 import com.aihost.expensemanager.report.service.ReportService;
@@ -14,6 +15,7 @@ import com.aihost.expensemanager.settlement.repository.SettlementRepository;
 import com.aihost.expensemanager.settlement.service.SettlementService;
 import com.aihost.expensemanager.user.entity.AppUser;
 import com.aihost.expensemanager.user.service.UserService;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,17 +26,20 @@ import org.springframework.transaction.annotation.Transactional;
 public class SettlementServiceImpl implements SettlementService {
 
   private final SettlementRepository settlementRepository;
+  private final ExpenseService expenseService;
   private final ReportService reportService;
   private final UserService userService;
   private final SettlementMapper settlementMapper;
 
   public SettlementServiceImpl(
     SettlementRepository settlementRepository,
+    ExpenseService expenseService,
     ReportService reportService,
     UserService userService,
     SettlementMapper settlementMapper
   ) {
     this.settlementRepository = settlementRepository;
+    this.expenseService = expenseService;
     this.reportService = reportService;
     this.userService = userService;
     this.settlementMapper = settlementMapper;
@@ -53,7 +58,17 @@ public class SettlementServiceImpl implements SettlementService {
   @Override
   @Transactional
   public List<SettlementResponse> generate(GenerateSettlementRequest request) {
-    settlementRepository.deleteByYearAndMonthAndStatus(request.year(), request.month(), SettlementStatus.PENDING);
+    List<Settlement> existingSettlements = settlementRepository.findAllByYearAndMonthOrderByStatusAscCreatedAtDesc(
+      request.year(),
+      request.month()
+    );
+    if (!existingSettlements.isEmpty()) {
+      return settlementMapper.toResponses(
+        existingSettlements.stream()
+          .filter(settlement -> settlement.getFromUser().isActive() && settlement.getToUser().isActive())
+          .toList()
+      );
+    }
 
     MonthlyReportResponse report = reportService.getMonthlyReport(request.year(), request.month());
     List<Settlement> generated = new ArrayList<>();
@@ -71,6 +86,10 @@ public class SettlementServiceImpl implements SettlementService {
       generated.add(settlementRepository.save(settlement));
     }
 
+    LocalDate startDate = LocalDate.of(request.year(), request.month(), 1);
+    LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+    expenseService.settleExpensesInRange(startDate, endDate);
+
     return settlementMapper.toResponses(generated);
   }
 
@@ -78,7 +97,7 @@ public class SettlementServiceImpl implements SettlementService {
   @Transactional
   public SettlementResponse updateStatus(Long settlementId, UpdateSettlementStatusRequest request) {
     Settlement settlement = settlementRepository.findById(settlementId)
-      .orElseThrow(() -> new NotFoundException("Khong tim thay quyet toan."));
+      .orElseThrow(() -> new NotFoundException("Không tìm thấy quyết toán."));
 
     settlement.setStatus(request.status());
     settlement.setPaidAt(request.status() == SettlementStatus.PAID ? LocalDateTime.now() : null);
