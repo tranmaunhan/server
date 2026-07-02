@@ -39,6 +39,10 @@ button {
   min-height: 100vh;
 }
 
+.app-shell {
+  overscroll-behavior-y: contain;
+}
+
 .auth-shell {
   display: grid;
   place-items: center;
@@ -124,6 +128,51 @@ button {
   background: rgba(255, 255, 255, 0.78);
   backdrop-filter: blur(18px);
   border-bottom: 1px solid rgba(19, 72, 62, 0.08);
+}
+
+.pull-refresh-shell {
+  min-height: 100vh;
+  transition: transform 0.18s ease;
+  will-change: transform;
+}
+
+.pull-refresh-indicator {
+  position: fixed;
+  left: 50%;
+  top: 10px;
+  z-index: 22;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(19, 72, 62, 0.08);
+  box-shadow: 0 14px 32px rgba(18, 50, 44, 0.12);
+  color: #16493f;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.pull-refresh-indicator.visible {
+  opacity: 1;
+}
+
+.pull-refresh-indicator strong {
+  font-size: 0.92rem;
+}
+
+.pull-refresh-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid rgba(15, 118, 110, 0.2);
+  border-top-color: #0f766e;
+}
+
+.pull-refresh-spinner.spinning {
+  animation: pull-refresh-spin 0.75s linear infinite;
 }
 
 .topbar-avatar {
@@ -518,6 +567,16 @@ button {
   background: #f4f7f5;
   color: #16493f;
   font-size: 1.4rem;
+}
+
+@keyframes pull-refresh-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (min-width: 900px) {

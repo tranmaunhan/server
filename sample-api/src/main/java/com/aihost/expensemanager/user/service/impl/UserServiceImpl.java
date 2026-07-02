@@ -66,6 +66,12 @@ public class UserServiceImpl implements UserService {
 
   @Override
   @Transactional(readOnly = true)
+  public List<AppUser> getActiveUsers() {
+    return appUserRepository.findAllByActiveTrueOrderByFullNameAsc();
+  }
+
+  @Override
+  @Transactional(readOnly = true)
   public List<AppUser> getAllUsers() {
     return appUserRepository.findAllByOrderByFullNameAsc();
   }

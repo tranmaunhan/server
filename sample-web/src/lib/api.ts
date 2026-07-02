@@ -54,6 +54,10 @@ export class ApiClient {
     return this.request<UserOption[]>("/users");
   }
 
+  getAdminUsers() {
+    return this.request<UserOption[]>("/users/admin");
+  }
+
   updateUserRole(userId: number, role: UserRole) {
     return this.request<User>(`/users/admin/${userId}/role`, {
       method: "PATCH",

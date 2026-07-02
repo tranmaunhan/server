@@ -14,6 +14,8 @@ public interface UserService {
 
   AppUser getActiveUserById(Long id);
 
+  List<AppUser> getActiveUsers();
+
   List<AppUser> getAllUsers();
 
   AppUser updateRole(Long userId, UserRole role);

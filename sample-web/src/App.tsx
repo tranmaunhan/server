@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiClient } from "./lib/api";
 import { getAppConfig } from "./lib/config";
+import { compressImageForUpload } from "./lib/image";
 import { clearToken, clearUser, getToken, getUser, saveToken, saveUser } from "./lib/storage";
 import type {
   DashboardResponse,
@@ -19,6 +20,9 @@ import type {
 type TabKey = "home" | "expenses" | "reports" | "account";
 
 const GOOGLE_SCRIPT_ID = "google-identity-services";
+const PULL_REFRESH_THRESHOLD = 84;
+const PULL_REFRESH_MAX = 132;
+const PULL_REFRESH_HOLD = 68;
 const config = getAppConfig();
 const api = new ApiClient(config.apiBaseUrl, () => getToken());
 
@@ -27,6 +31,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>("home");
   const [user, setUser] = useState<User | null>(() => parseStoredUser());
   const [users, setUsers] = useState<UserOption[]>([]);
+  const [adminUsers, setAdminUsers] = useState<UserOption[]>([]);
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [report, setReport] = useState<MonthlyReport | null>(null);
@@ -40,8 +45,13 @@ export default function App() {
   const [googleReady, setGoogleReady] = useState(false);
   const [showExpenseForm, setShowExpenseForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [pullDistance, setPullDistance] = useState(0);
+  const [pullRefreshing, setPullRefreshing] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement | null>(null);
   const buttonRenderedRef = useRef(false);
+  const pullStartYRef = useRef<number | null>(null);
+  const pullDistanceRef = useRef(0);
+  const pullActiveRef = useRef(false);
 
   useEffect(() => {
     const token = getToken();
@@ -117,27 +127,56 @@ export default function App() {
     buttonRenderedRef.current = true;
   }, [googleReady, user]);
 
+  function updatePullDistance(nextDistance: number) {
+    pullDistanceRef.current = nextDistance;
+    setPullDistance(nextDistance);
+  }
+
+  function resetPullState() {
+    pullStartYRef.current = null;
+    pullActiveRef.current = false;
+    updatePullDistance(0);
+  }
+
+  function canStartPullRefresh() {
+    return !showExpenseForm && !loading && !authenticating && !pullRefreshing && window.scrollY <= 0;
+  }
+
+  async function loadAdminUsers(nextUser: User | null) {
+    if (nextUser?.role !== "ADMIN") {
+      return [];
+    }
+
+    return api.getAdminUsers();
+  }
+
+  async function syncAppData(nextYear = year, nextMonth = month) {
+    setError("");
+    const [me, memberList, dashboardData, expenseList, reportData, settlementList] = await Promise.all([
+      api.getMe(),
+      api.getUsers(),
+      api.getDashboard(),
+      api.getExpenses(),
+      api.getMonthlyReport(nextYear, nextMonth),
+      api.getSettlements(nextYear, nextMonth)
+    ]);
+    const nextAdminUsers = await loadAdminUsers(me);
+
+    setUser(me);
+    setUsers(memberList);
+    setAdminUsers(nextAdminUsers);
+    setDashboard(dashboardData);
+    setExpenses(expenseList);
+    setReport(reportData);
+    setSettlements(settlementList);
+    saveUser(JSON.stringify(me));
+  }
+
   async function bootstrap(nextYear = year, nextMonth = month) {
     setLoading(true);
-    setError("");
 
     try {
-      const [me, memberList, dashboardData, expenseList, reportData, settlementList] = await Promise.all([
-        api.getMe(),
-        api.getUsers(),
-        api.getDashboard(),
-        api.getExpenses(),
-        api.getMonthlyReport(nextYear, nextMonth),
-        api.getSettlements(nextYear, nextMonth)
-      ]);
-
-      setUser(me);
-      setUsers(memberList);
-      setDashboard(dashboardData);
-      setExpenses(expenseList);
-      setReport(reportData);
-      setSettlements(settlementList);
-      saveUser(JSON.stringify(me));
+      await syncAppData(nextYear, nextMonth);
     } catch (bootstrapError) {
       handleApiError(bootstrapError);
       logout();
@@ -167,17 +206,95 @@ export default function App() {
 
   async function refreshOverview() {
     try {
+      const adminUsersPromise = loadAdminUsers(user);
       const [memberList, dashboardData, expenseList] = await Promise.all([
         api.getUsers(),
         api.getDashboard(),
         api.getExpenses()
       ]);
+      const nextAdminUsers = await adminUsersPromise;
       setUsers(memberList);
+      setAdminUsers(nextAdminUsers);
       setDashboard(dashboardData);
       setExpenses(expenseList);
     } catch (overviewError) {
       handleApiError(overviewError);
     }
+  }
+
+  async function handlePullRefresh() {
+    if (pullRefreshing) {
+      return;
+    }
+
+    setPullRefreshing(true);
+    updatePullDistance(PULL_REFRESH_HOLD);
+
+    try {
+      await syncAppData(year, month);
+      setMessage("\u0110\u00e3 l\u00e0m m\u1edbi d\u1eef li\u1ec7u.");
+    } catch (refreshError) {
+      handleApiError(refreshError);
+    } finally {
+      setPullRefreshing(false);
+      resetPullState();
+    }
+  }
+
+  function handleAppTouchStart(event: React.TouchEvent<HTMLElement>) {
+    if (!canStartPullRefresh()) {
+      resetPullState();
+      return;
+    }
+
+    pullStartYRef.current = event.touches[0]?.clientY ?? null;
+    pullActiveRef.current = false;
+  }
+
+  function handleAppTouchMove(event: React.TouchEvent<HTMLElement>) {
+    if (pullStartYRef.current == null || showExpenseForm || pullRefreshing) {
+      return;
+    }
+
+    const currentY = event.touches[0]?.clientY;
+    if (currentY == null) {
+      return;
+    }
+
+    const deltaY = currentY - pullStartYRef.current;
+    if (deltaY <= 0) {
+      if (pullActiveRef.current) {
+        resetPullState();
+      }
+      return;
+    }
+
+    if (window.scrollY > 0 && !pullActiveRef.current) {
+      pullStartYRef.current = null;
+      return;
+    }
+
+    pullActiveRef.current = true;
+    const nextDistance = Math.min(PULL_REFRESH_MAX, deltaY * 0.45);
+    updatePullDistance(nextDistance);
+
+    if (event.cancelable) {
+      event.preventDefault();
+    }
+  }
+
+  function handleAppTouchEnd() {
+    const shouldRefresh = pullActiveRef.current && pullDistanceRef.current >= PULL_REFRESH_THRESHOLD;
+
+    pullStartYRef.current = null;
+    pullActiveRef.current = false;
+
+    if (shouldRefresh) {
+      void handlePullRefresh();
+      return;
+    }
+
+    updatePullDistance(0);
   }
 
   async function handleGoogleLogin(credential: string) {
@@ -224,7 +341,15 @@ export default function App() {
   }
 
   async function handleUploadExpenseImage(file: File) {
-    const response = await api.uploadExpenseImage(file);
+    const uploadFile = await compressImageForUpload(file);
+    console.info("[expense] upload receipt image", {
+      originalName: file.name,
+      originalSize: file.size,
+      uploadName: uploadFile.name,
+      uploadSize: uploadFile.size,
+      type: uploadFile.type
+    });
+    const response = await api.uploadExpenseImage(uploadFile);
     setMessage("Đã tải ảnh hóa đơn lên server.");
     return response.url;
   }
@@ -295,6 +420,7 @@ export default function App() {
     clearUser();
     setUser(null);
     setUsers([]);
+    setAdminUsers([]);
     setDashboard(null);
     setExpenses([]);
     setReport(null);
@@ -307,6 +433,14 @@ export default function App() {
     const nextMessage = errorValue instanceof Error ? errorValue.message : "Đã có lỗi xảy ra.";
     setError(nextMessage);
   }
+
+  const pullProgress = Math.min(pullDistance / PULL_REFRESH_THRESHOLD, 1);
+  const pullOffset = pullDistance > 0 || pullRefreshing ? Math.max(pullDistance, pullRefreshing ? PULL_REFRESH_HOLD : 0) : 0;
+  const pullLabel = pullRefreshing
+    ? "\u0110ang l\u00e0m m\u1edbi d\u1eef li\u1ec7u..."
+    : pullDistance >= PULL_REFRESH_THRESHOLD
+      ? "Th\u1ea3 tay \u0111\u1ec3 l\u00e0m m\u1edbi"
+      : "K\u00e9o xu\u1ed1ng \u0111\u1ec3 l\u00e0m m\u1edbi";
 
   if (!user) {
     return (
@@ -332,7 +466,25 @@ export default function App() {
   }
 
   return (
-    <main className="app-shell">
+    <main
+      className={pullOffset > 0 ? "app-shell pull-active" : "app-shell"}
+      onTouchCancel={handleAppTouchEnd}
+      onTouchEnd={handleAppTouchEnd}
+      onTouchMove={handleAppTouchMove}
+      onTouchStart={handleAppTouchStart}
+    >
+      <div
+        className={pullOffset > 0 || pullRefreshing ? "pull-refresh-indicator visible" : "pull-refresh-indicator"}
+        style={{
+          opacity: pullRefreshing ? 1 : pullProgress,
+          transform: `translate(-50%, ${Math.max(8, pullOffset - 30)}px)`
+        }}
+      >
+        <span className={pullRefreshing ? "pull-refresh-spinner spinning" : "pull-refresh-spinner"} />
+        <strong>{pullLabel}</strong>
+      </div>
+
+      <div className="pull-refresh-shell" style={{ transform: `translateY(${pullOffset}px)` }}>
       <header className="topbar">
         <div>
           <p className="eyebrow">Family Expense PWA</p>
@@ -380,13 +532,14 @@ export default function App() {
         {activeTab === "account" && (
           <AccountTab
             currentUser={user}
-            users={users}
+            users={adminUsers}
             onLogout={logout}
             onUserRoleChange={handleUserRoleChange}
             onUserStatusChange={handleUserStatusChange}
           />
         )}
       </section>
+      </div>
 
       <button className="fab-button" onClick={openCreateExpense} type="button" aria-label="Thêm khoản chi">
         +
@@ -413,7 +566,7 @@ export default function App() {
       {showExpenseForm && (
         <ExpenseFormSheet
           currentUser={user}
-          users={users.filter((member) => member.active)}
+          users={users}
           initialExpense={editingExpense}
           onUploadImage={handleUploadExpenseImage}
           onClose={() => {
@@ -676,6 +829,9 @@ function AccountTab({
             <div>
               <p className="eyebrow">Quản lý thành viên</p>
               <h3>Admin panel</h3>
+              <p className="muted-text">
+                {"Danh s\u00e1ch n\u00e0y bao g\u1ed3m c\u1ea3 t\u00e0i kho\u1ea3n \u0111ang ho\u1ea1t \u0111\u1ed9ng v\u00e0 t\u00e0i kho\u1ea3n \u0111\u00e3 b\u1ecb kh\u00f3a."}
+              </p>
             </div>
           </div>
           <div className="list-stack">
@@ -684,6 +840,7 @@ function AccountTab({
                 <div>
                   <strong>{member.fullName}</strong>
                   <p>{member.email}</p>
+                  <p>{member.active ? "\u0110ang ho\u1ea1t \u0111\u1ed9ng" : "\u0110\u00e3 b\u1ecb kh\u00f3a"}</p>
                 </div>
                 <div className="member-actions">
                   <select

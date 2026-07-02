@@ -36,6 +36,11 @@ public class UserController {
 
   @GetMapping
   public List<UserOptionResponse> list() {
+    return userService.getActiveUsers().stream().map(userMapper::toOption).toList();
+  }
+
+  @GetMapping("/admin")
+  public List<UserOptionResponse> adminList() {
     return userService.getAllUsers().stream().map(userMapper::toOption).toList();
   }
 
