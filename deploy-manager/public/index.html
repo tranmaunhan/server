@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deploy Manager</title>
+    <link rel="stylesheet" href="/ui/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <p class="eyebrow">B&#7843;ng &#272;i&#7873;u Khi&#7875;n N&#7897;i B&#7897;</p>
+          <h1>Deploy Manager</h1>
+        </div>
+        <div class="topbar-note">
+          Build Once, Run Anywhere: image c&#7911;a Deploy Manager gi&#7889;ng nhau tr&#234;n m&#7885;i server. M&#7885;i kh&#225;c bi&#7879;t n&#7857;m &#7903; `.env`, `docker-compose.yml`, whitelist app v&#224; route nginx.
+        </div>
+      </section>
+
+      <section class="hero">
+        <div class="hero-copy">
+          <span class="hero-chip">Service allowlist &middot; Nginx UI &middot; Bearer Token</span>
+          <h2>GitHub Actions ch&#7881; g&#7917;i `serviceName`, c&#242;n l&#7841;i &#273;&#7875; Deploy Manager ki&#7875;m so&#225;t.</h2>
+          <p class="lede">
+            H&#7879; th&#7889;ng ch&#7881; cho ph&#233;p `docker compose pull` v&#224; `docker compose up -d` tr&#234;n nh&#7919;ng service c&#243; trong whitelist. Sau khi deploy xong, service s&#7869; health check, ghi audit log v&#224; c&#243; th&#7875; reload nginx t&#7915; UI.
+          </p>
+          <div class="hero-actions">
+            <button id="refresh-health" class="ghost">L&#224;m m&#7899;i tr&#7841;ng th&#225;i</button>
+            <button id="reload-apps" class="ghost">T&#7843;i l&#7841;i app</button>
+            <button id="reload-routes" class="ghost">T&#7843;i l&#7841;i route</button>
+            <button id="reload-deployments" class="ghost">T&#7843;i l&#7841;i log</button>
+          </div>
+        </div>
+
+        <div class="hero-metrics">
+          <div class="metric-card">
+            <span class="metric-label">Service</span>
+            <strong id="health-status">&#272;ang ki&#7875;m tra...</strong>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Whitelist</span>
+            <strong id="health-app-count">-</strong>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Route</span>
+            <strong id="health-route-count">-</strong>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Deploy</span>
+            <strong id="health-busy">-</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="info-strip">
+        <div class="info-card">
+          <span class="info-title">Compose Runtime</span>
+          <span class="info-body">Deploy Manager ch&#7881; ch&#7841;y `docker compose pull/up` tr&#234;n compose file &#273;&#432;&#7907;c mount v&#224;o `/workspace`.</span>
+        </div>
+        <div class="info-card">
+          <span class="info-title">Deploy API</span>
+          <span class="info-body">Request deploy ch&#7881; nh&#7853;n `serviceName` qua `Authorization: Bearer ...`.</span>
+        </div>
+        <div class="info-card">
+          <span class="info-title">Nginx Reverse Proxy</span>
+          <span class="info-body">UI sinh file route t&#7921; &#273;&#7897;ng, test `nginx -t`, sau &#273;&#243; m&#7899;i reload.</span>
+        </div>
+      </section>
+
+      <section class="workspace">
+        <section class="stack stack-left">
+          <section class="panel auth-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Phi&#234;n l&#224;m vi&#7879;c</p>
+                <h2>Bearer Token</h2>
+              </div>
+              <button id="save-tokens" class="primary">L&#432;u token</button>
+            </div>
+            <div class="grid two">
+              <label>
+                <span>Deploy Token</span>
+                <input id="deploy-token" type="password" placeholder="Bearer cho GitHub Actions" />
+              </label>
+              <label>
+                <span>Admin Token</span>
+                <input id="admin-token" type="password" placeholder="Bearer cho UI/Admin API" />
+              </label>
+            </div>
+            <p class="hint">
+              UI n&#224;y n&#234;n ch&#7881; m&#7903; trong localhost, LAN ho&#7863;c VPN n&#7897;i b&#7897;. Nginx public kh&#244;ng n&#234;n expose `/admin` hay `/ui`.
+            </p>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Allowlist service</p>
+                <h2>Danh s&#225;ch app &#273;&#432;&#7907;c ph&#233;p deploy</h2>
+              </div>
+              <div class="actions-inline">
+                <button id="reset-form" class="ghost">App m&#7899;i</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Service</th>
+                    <th>Compose</th>
+                    <th>Image</th>
+                    <th>Health Check</th>
+                    <th>Tr&#7841;ng th&#225;i</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="apps-table">
+                  <tr>
+                    <td colspan="6" class="muted-cell">Ch&#432;a c&#243; app n&#224;o.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="panel panel-wide">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Route nginx</p>
+                <h2>Danh s&#225;ch reverse proxy</h2>
+              </div>
+              <div class="actions-inline">
+                <button id="reset-route-form" class="ghost">Route m&#7899;i</button>
+                <button id="apply-nginx" class="primary">&#193;p d&#7909;ng nginx</button>
+                <button id="preview-nginx" class="ghost">Xem preview</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID</th>
+                    <th>Hostname</th>
+                    <th>Path</th>
+                    <th>Service</th>
+                    <th>Port</th>
+                    <th>Tr&#7841;ng th&#225;i</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="routes-table">
+                  <tr>
+                    <td colspan="7" class="muted-cell">Ch&#432;a c&#243; route n&#224;o.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <section class="stack stack-right">
+          <form id="app-form" class="panel form-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Whitelist app</p>
+                <h2 id="form-title">T&#7841;o app</h2>
+              </div>
+              <button type="submit" class="primary">L&#432;u app</button>
+            </div>
+
+            <div class="grid two">
+              <label>
+                <span>serviceName</span>
+                <input name="serviceName" required placeholder="my-api" />
+              </label>
+              <label>
+                <span>Tr&#7841;ng th&#225;i</span>
+                <select name="enabled">
+                  <option value="true">B&#7853;t</option>
+                  <option value="false">T&#7855;t</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>
+                <span>T&#234;n hi&#7875;n th&#7883;</span>
+                <input name="displayName" placeholder="My API" />
+              </label>
+              <label>
+                <span>composeService</span>
+                <input name="composeService" placeholder="M&#7863;c &#273;&#7883;nh = serviceName" />
+              </label>
+            </div>
+
+            <label>
+              <span>Image (metadata)</span>
+              <input name="image" placeholder="ghcr.io/company/my-api" />
+            </label>
+
+            <div class="grid two">
+              <label>
+                <span>Health Check URL</span>
+                <input name="healthCheckUrl" placeholder="http://my-api:8080/healthz" />
+              </label>
+              <label>
+                <span>Method</span>
+                <select name="healthCheckMethod">
+                  <option value="GET">GET</option>
+                  <option value="HEAD">HEAD</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>
+                <span>Expected Status</span>
+                <input name="healthCheckExpectedStatus" placeholder="200" />
+              </label>
+              <label>
+                <span>Timeout / Interval (ms)</span>
+                <div class="grid two">
+                  <input name="healthCheckTimeoutMs" placeholder="60000" />
+                  <input name="healthCheckIntervalMs" placeholder="3000" />
+                </div>
+              </label>
+            </div>
+          </form>
+
+          <form id="route-form" class="panel form-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">C&#7845;u h&#236;nh route</p>
+                <h2 id="route-form-title">T&#7841;o route nginx</h2>
+              </div>
+              <button type="submit" class="primary">L&#432;u route</button>
+            </div>
+
+            <div class="grid two">
+              <label>
+                <span>Route ID</span>
+                <input name="id" required placeholder="api-public" />
+              </label>
+              <label>
+                <span>Tr&#7841;ng th&#225;i</span>
+                <select name="enabled">
+                  <option value="true">B&#7853;t</option>
+                  <option value="false">T&#7855;t</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>
+                <span>Hostname</span>
+                <input name="hostname" required placeholder="api.example.com" />
+              </label>
+              <label>
+                <span>Path Prefix</span>
+                <input name="pathPrefix" placeholder="/" />
+              </label>
+            </div>
+
+            <div class="grid two">
+              <label>
+                <span>serviceName</span>
+                <select name="serviceName" id="route-service-select"></select>
+              </label>
+              <label>
+                <span>Target Port</span>
+                <input name="targetPort" required placeholder="8080" />
+              </label>
+            </div>
+          </form>
+
+          <form id="deploy-form" class="panel form-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Deploy th&#7911; c&#244;ng</p>
+                <h2>Trigger deploy theo whitelist</h2>
+              </div>
+              <button type="submit" class="accent">Deploy</button>
+            </div>
+
+            <label>
+              <span>serviceName</span>
+              <select name="serviceName" id="deploy-service-select"></select>
+            </label>
+
+            <p class="hint">Request deploy ch&#7881; g&#7917;i m&#7897;t field duy nh&#7845;t: `serviceName`.</p>
+
+            <div class="console-output" id="deploy-output">Ch&#432;a c&#243; deployment n&#224;o.</div>
+          </form>
+
+          <section class="panel form-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">Audit log</p>
+                <h2>L&#7847;n deploy g&#7847;n &#273;&#226;y</h2>
+              </div>
+            </div>
+            <div class="console-output" id="deployments-output">Ch&#432;a c&#243; log deploy.</div>
+          </section>
+
+          <section class="panel form-panel">
+            <div class="panel-head">
+              <div>
+                <p class="eyebrow">K&#7871;t qu&#7843; nginx</p>
+                <h2>Preview v&#224; &#225;p d&#7909;ng c&#7845;u h&#236;nh</h2>
+              </div>
+            </div>
+            <div class="console-output" id="nginx-output">Ch&#432;a c&#243; thao t&#225;c nginx n&#224;o.</div>
+          </section>
+        </section>
+      </section>
+
+      <div id="toast" class="toast hidden"></div>
+    </main>
+
+    <script src="/ui/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,106 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    network_mode: host
+
+  nginx-gateway:
+    image: nginx:latest
+    container_name: nginx-gateway
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    networks:
+      - web
+      - app
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-sampledb}
+      POSTGRES_USER: ${POSTGRES_USER:-sample}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-samplepass}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-sample} -d ${POSTGRES_DB:-sampledb}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app
+
+  spring-api:
+    image: ${SPRING_API_IMAGE:-sample-spring-api:dev}
+    build:
+      context: ./sample-api
+    container_name: spring-api
+    restart: unless-stopped
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-sampledb}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-sample}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-samplepass}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/actuator/health | grep UP || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+    networks:
+      - app
+
+  react-web:
+    image: ${REACT_WEB_IMAGE:-sample-react-web:dev}
+    build:
+      context: ./sample-web
+    container_name: react-web
+    restart: unless-stopped
+    depends_on:
+      spring-api:
+        condition: service_started
+    networks:
+      - app
+
+  deploy-manager:
+    image: ${DEPLOY_MANAGER_IMAGE:-your-dockerhub-user/deploy-manager:latest}
+    container_name: deploy-manager
+    restart: unless-stopped
+    ports:
+      - "${DEPLOY_MANAGER_PORT_BIND:-127.0.0.1:18080}:8080"
+    environment:
+      DEPLOY_ADDR: ":8080"
+      DEPLOY_TOKEN: ${DEPLOY_TOKEN}
+      DEPLOY_ADMIN_TOKEN: ${DEPLOY_ADMIN_TOKEN:-}
+      DEPLOY_CONFIG: /data/apps.json
+      ROUTES_CONFIG: /data/routes.json
+      DEPLOY_AUDIT_LOG: /data/deployments.log
+      COMPOSE_PROJECT_DIR: ${COMPOSE_PROJECT_DIR:-/workspace}
+      COMPOSE_FILE_PATH: ${COMPOSE_FILE_PATH:-/workspace/docker-compose.yml}
+      COMPOSE_ENV_FILE: ${COMPOSE_ENV_FILE:-/workspace/.env}
+      NGINX_GENERATED_CONFIG: /workspace/nginx/conf.d/zz-generated-routes.conf
+      NGINX_CONTAINER_NAME: nginx-gateway
+      NGINX_MANAGEMENT_ENABLED: "true"
+    volumes:
+      - ./deploy-manager/config:/data
+      - ${DEPLOY_HOST_ROOT:-.}:/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - web
+      - app
+
+networks:
+  web:
+    driver: bridge
+  app:
+    driver: bridge
+
+volumes:
+  postgres_data:

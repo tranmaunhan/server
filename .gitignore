@@ -1,0 +1,6 @@
+.env
+deploy-manager/data/
+deploy-manager/node_modules/
+sample-api/target/
+sample-web/node_modules/
+sample-web/dist/

@@ -1,0 +1,13 @@
+{
+  "name": "deploy-manager",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Allowlisted deployment receiver for Docker Compose workloads",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}

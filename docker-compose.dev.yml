@@ -1,0 +1,5 @@
+services:
+  deploy-manager:
+    build:
+      context: ./deploy-manager
+    image: deploy-manager:dev

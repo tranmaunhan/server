@@ -1,0 +1,68 @@
+name: Deploy Spring API
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "sample-api/**"
+      - ".github/workflows/deploy-spring-api.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-spring-api
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Load project deploy config
+        id: config
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_IMAGE_NAMESPACE: ${{ vars.DOCKER_IMAGE_NAMESPACE }}
+        run: |
+          if [ -z "${DOCKER_IMAGE_NAMESPACE}" ]; then
+            DOCKER_IMAGE_NAMESPACE="${DOCKERHUB_USERNAME}"
+          fi
+          export DOCKER_IMAGE_NAMESPACE
+          set -a
+          . ./sample-api/.ci/deploy.env
+          set +a
+          echo "service_name=${SERVICE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "docker_context=${DOCKER_CONTEXT}" >> "$GITHUB_OUTPUT"
+          echo "image_ref=${IMAGE_REPOSITORY}:${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
+          echo "deploy_url=${DEPLOY_URL}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Spring API image
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ steps.config.outputs.docker_context }}
+          push: true
+          tags: ${{ steps.config.outputs.image_ref }}
+
+      - name: Trigger deploy-manager
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEPLOY_TOKEN }}
+          DEPLOY_URL: ${{ steps.config.outputs.deploy_url }}
+          SERVICE_NAME: ${{ steps.config.outputs.service_name }}
+        run: |
+          curl --fail --show-error --location \
+            --request POST "${DEPLOY_URL}" \
+            --header "Authorization: Bearer ${DEPLOY_TOKEN}" \
+            --header "Content-Type: application/json" \
+            --data "{\"serviceName\":\"${SERVICE_NAME}\"}"

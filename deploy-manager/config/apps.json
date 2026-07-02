@@ -1,0 +1,28 @@
+{
+  "apps": [
+    {
+      "serviceName": "react-web",
+      "displayName": "Sample React Web",
+      "enabled": true,
+      "composeService": "react-web",
+      "image": "sample-react-web:dev",
+      "healthCheckUrl": "http://react-web/",
+      "healthCheckMethod": "GET",
+      "healthCheckExpectedStatus": 200,
+      "healthCheckTimeoutMs": 30000,
+      "healthCheckIntervalMs": 3000
+    },
+    {
+      "serviceName": "spring-api",
+      "displayName": "Sample Spring API",
+      "enabled": true,
+      "composeService": "spring-api",
+      "image": "sample-spring-api:dev",
+      "healthCheckUrl": "http://spring-api:8080/actuator/health",
+      "healthCheckMethod": "GET",
+      "healthCheckExpectedStatus": 200,
+      "healthCheckTimeoutMs": 60000,
+      "healthCheckIntervalMs": 3000
+    }
+  ]
+}
