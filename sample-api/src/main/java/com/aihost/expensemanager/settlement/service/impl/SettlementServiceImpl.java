@@ -1,10 +1,13 @@
 package com.aihost.expensemanager.settlement.service.impl;
 
+import com.aihost.expensemanager.common.exception.BadRequestException;
+import com.aihost.expensemanager.common.exception.ForbiddenException;
 import com.aihost.expensemanager.common.exception.NotFoundException;
 import com.aihost.expensemanager.expense.service.ExpenseService;
 import com.aihost.expensemanager.report.dto.MonthlyReportResponse;
 import com.aihost.expensemanager.report.dto.SettlementSuggestionResponse;
 import com.aihost.expensemanager.report.service.ReportService;
+import com.aihost.expensemanager.security.CurrentUser;
 import com.aihost.expensemanager.settlement.dto.GenerateSettlementRequest;
 import com.aihost.expensemanager.settlement.dto.SettlementResponse;
 import com.aihost.expensemanager.settlement.dto.UpdateSettlementStatusRequest;
@@ -95,12 +98,24 @@ public class SettlementServiceImpl implements SettlementService {
 
   @Override
   @Transactional
-  public SettlementResponse updateStatus(Long settlementId, UpdateSettlementStatusRequest request) {
+  public SettlementResponse updateStatus(CurrentUser currentUser, Long settlementId, UpdateSettlementStatusRequest request) {
     Settlement settlement = settlementRepository.findById(settlementId)
       .orElseThrow(() -> new NotFoundException("Không tìm thấy quyết toán."));
 
-    settlement.setStatus(request.status());
-    settlement.setPaidAt(request.status() == SettlementStatus.PAID ? LocalDateTime.now() : null);
+    if (request.status() != SettlementStatus.PAID) {
+      throw new BadRequestException("Chỉ hỗ trợ xác nhận đã nhận tiền.");
+    }
+
+    if (currentUser == null || !settlement.getToUser().getId().equals(currentUser.id())) {
+      throw new ForbiddenException("Chỉ người nhận tiền mới có thể xác nhận đã nhận.");
+    }
+
+    if (settlement.getStatus() == SettlementStatus.PAID) {
+      throw new BadRequestException("Khoản quyết toán này đã hoàn tất.");
+    }
+
+    settlement.setStatus(SettlementStatus.PAID);
+    settlement.setPaidAt(LocalDateTime.now());
 
     return settlementMapper.toResponse(settlementRepository.save(settlement));
   }

@@ -5,12 +5,12 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 public record GenerateSettlementRequest(
-  @NotNull(message = "khong duoc de trong")
-  @Min(value = 1, message = "phai tu 1 den 12")
-  @Max(value = 12, message = "phai tu 1 den 12")
+  @NotNull(message = "Không được để trống.")
+  @Min(value = 1, message = "Phải từ 1 đến 12.")
+  @Max(value = 12, message = "Phải từ 1 đến 12.")
   Integer month,
-  @NotNull(message = "khong duoc de trong")
-  @Min(value = 2000, message = "nam khong hop le")
+  @NotNull(message = "Không được để trống.")
+  @Min(value = 2000, message = "Năm không hợp lệ.")
   Integer year
 ) {
 }

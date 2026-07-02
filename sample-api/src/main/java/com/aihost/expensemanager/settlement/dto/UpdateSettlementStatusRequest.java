@@ -4,6 +4,6 @@ import com.aihost.expensemanager.settlement.enums.SettlementStatus;
 import jakarta.validation.constraints.NotNull;
 
 public record UpdateSettlementStatusRequest(
-  @NotNull(message = "khong duoc de trong") SettlementStatus status
+  @NotNull(message = "Không được để trống.") SettlementStatus status
 ) {
 }

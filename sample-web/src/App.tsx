@@ -19,7 +19,6 @@ import type {
   ExpensePayload,
   MonthlyReport,
   Settlement,
-  SettlementStatus,
   User,
   UserOption,
   UserRole
@@ -433,10 +432,10 @@ export default function App() {
     }
   }
 
-  async function handleSettlementStatus(settlementId: number, status: SettlementStatus) {
+  async function handleSettlementStatus(settlementId: number) {
     try {
-      await api.updateSettlementStatus(settlementId, status);
-      setMessage(status === "PAID" ? "Đã đánh dấu đã thanh toán." : "Đã chuyển về trạng thái chờ thanh toán.");
+      await api.updateSettlementStatus(settlementId, "PAID");
+      setMessage("Đã xác nhận đã nhận tiền.");
       await refreshPeriodData(year, month);
     } catch (settlementError) {
       handleApiError(settlementError);
@@ -546,6 +545,7 @@ export default function App() {
 
           {activeTab === "reports" && (
             <ReportsTab
+              currentUser={user}
               month={month}
               onGenerateSettlements={handleGenerateSettlements}
               onPeriodChange={refreshPeriodData}

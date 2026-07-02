@@ -613,6 +613,31 @@ button {
   gap: 6px;
 }
 
+.settlement-sections,
+.settlement-group {
+  display: grid;
+  gap: 14px;
+}
+
+.settlement-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+  color: #48695f;
+}
+
+.settlement-group-header strong {
+  color: #163630;
+  font-size: 0.96rem;
+}
+
+.settlement-group-header span {
+  font-size: 0.85rem;
+  color: #648176;
+}
+
 .inline-meta {
   display: flex;
   flex-wrap: wrap;
@@ -621,10 +646,36 @@ button {
   font-size: 0.9rem;
 }
 
+.settlement-meta p {
+  margin: 0;
+}
+
 .settlement-amount-text {
   margin: 0;
   color: #31594f;
   font-weight: 600;
+}
+
+.settlement-state-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 132px;
+  padding: 10px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.settlement-state-pill.pending {
+  background: #fff7e6;
+  color: #9a6700;
+}
+
+.settlement-state-pill.done {
+  background: #e8fff4;
+  color: #0f766e;
 }
 
 .expense-amount {
@@ -1073,6 +1124,11 @@ button {
 
   .inline-meta {
     font-size: 0.86rem;
+  }
+
+  .settlement-group-header {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .hero-row,
