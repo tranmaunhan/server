@@ -10,6 +10,8 @@ Spring Boot backend nay duoc dat san theo dung flow:
 - `mapper`
 - DTO tach rieng, controller khong tra truc tiep entity
 
+Backend hien khong con dung Flyway. Schema duoc Hibernate quan ly thong qua `SPRING_JPA_HIBERNATE_DDL_AUTO` va mac dinh la `update`.
+
 ## Chuc nang da co
 
 - Dang nhap Google bang ID Token

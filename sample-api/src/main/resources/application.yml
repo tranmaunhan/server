@@ -7,7 +7,7 @@ spring:
     password: ${SPRING_DATASOURCE_PASSWORD:samplepass}
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     open-in-view: false
     properties:
       hibernate:
@@ -17,8 +17,6 @@ spring:
   jackson:
     serialization:
       indent-output: true
-  flyway:
-    enabled: true
   servlet:
     multipart:
       max-file-size: ${SPRING_SERVLET_MULTIPART_MAX_FILE_SIZE:10MB}
