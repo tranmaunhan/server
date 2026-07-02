@@ -17,7 +17,7 @@ export function HomeTab({ dashboard, user }: HomeTabProps) {
       <section className="panel-card home-overview-card wallet-home-card">
         <div className="wallet-home-top">
           <div>
-            <p className="eyebrow">A1.403 Card</p>
+            <p className="eyebrow">A1.403 Home</p>
             <h2>{user.fullName}</h2>
           </div>
           <span className="wallet-home-chip">Tháng này</span>
