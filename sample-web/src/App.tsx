@@ -61,6 +61,10 @@ export default function App() {
   const pullActiveRef = useRef(false);
 
   useEffect(() => {
+    document.title = config.appName;
+  }, []);
+
+  useEffect(() => {
     const token = getToken();
     if (!token) {
       setLoading(false);
@@ -485,6 +489,7 @@ export default function App() {
   if (!user) {
     return (
       <AuthScreen
+        appName={config.appName}
         authenticating={authenticating}
         error={error}
         googleButtonRef={googleButtonRef}
@@ -518,7 +523,7 @@ export default function App() {
       <div className="pull-refresh-shell" style={{ transform: `translateY(${pullOffset}px)` }}>
         <header className="topbar">
           <div>
-            <p className="eyebrow">Family Expense PWA</p>
+            <p className="eyebrow">{config.appName}</p>
             <h1>{tabTitle(activeTab)}</h1>
           </div>
           <button className="topbar-avatar" onClick={() => setActiveTab("account")} type="button">

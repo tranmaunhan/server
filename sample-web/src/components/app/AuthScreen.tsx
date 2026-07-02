@@ -1,6 +1,7 @@
 import type { RefObject } from "react";
 
 interface AuthScreenProps {
+  appName: string;
   authenticating: boolean;
   error: string;
   googleClientId: string;
@@ -9,6 +10,7 @@ interface AuthScreenProps {
 }
 
 export function AuthScreen({
+  appName,
   authenticating,
   error,
   googleButtonRef,
@@ -19,7 +21,7 @@ export function AuthScreen({
     <main className="auth-shell">
       <section className="auth-card">
         <div className="brand-mark">₫</div>
-        <p className="eyebrow">Family Expense PWA</p>
+        <p className="eyebrow">{appName}</p>
         <h1>Quản lý chi tiêu gia đình trong một chạm</h1>
         <p className="lead">
           Đăng nhập bằng Google, backend sẽ tạo JWT riêng cho hệ thống và frontend sử dụng Bearer Token cho toàn bộ API.

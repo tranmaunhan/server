@@ -11,13 +11,13 @@ export default defineConfig(({ mode }) => {
       react(),
       VitePWA({
         registerType: "autoUpdate",
-        includeAssets: ["pwa-192.svg", "pwa-512.svg"],
+        includeAssets: ["favicon.svg", "pwa-192.svg", "pwa-512.svg"],
         workbox: {
           globIgnores: ["**/runtime-config.js"]
         },
         manifest: {
-          name: "Family Expense PWA",
-          short_name: "Family Expense",
+          name: "A1.403",
+          short_name: "A1.403",
           description: "Ung dung quan ly chi tieu gia dinh toi uu cho thiet bi di dong.",
           theme_color: "#0f766e",
           background_color: "#f7f8f5",

@@ -1,5 +1,3 @@
-@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap");
-
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
@@ -11,7 +9,7 @@
     radial-gradient(circle at top left, rgba(208, 242, 230, 0.8), transparent 30%),
     radial-gradient(circle at right bottom, rgba(244, 231, 214, 0.72), transparent 26%),
     linear-gradient(180deg, #fffefb 0%, #f4f6f2 100%);
-  font-family: "Be Vietnam Pro", sans-serif;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 * {
@@ -361,6 +359,133 @@ button {
 .hero-copy p:last-child {
   margin: 0;
   font-size: 0.92rem;
+}
+
+.home-overview-card {
+  display: grid;
+  gap: 18px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.28), transparent 24%),
+    linear-gradient(145deg, #0f766e 0%, #155f5a 58%, #1f8b73 100%);
+  color: #f5fffb;
+}
+
+.home-overview-card .eyebrow,
+.home-overview-card p,
+.home-overview-card span,
+.home-overview-card h2,
+.home-overview-card strong {
+  color: inherit;
+}
+
+.home-overview-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.home-overview-copy {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.home-overview-copy p {
+  margin: 0;
+  max-width: 34ch;
+  color: rgba(245, 255, 251, 0.82);
+}
+
+.home-overview-avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 22px;
+  object-fit: cover;
+  border: 3px solid rgba(255, 255, 255, 0.32);
+  box-shadow: 0 16px 32px rgba(10, 48, 42, 0.24);
+}
+
+.home-overview-grid {
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 14px;
+}
+
+.home-amount-card {
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.home-amount-card.major {
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.home-amount-card.minor {
+  background: rgba(12, 31, 28, 0.2);
+}
+
+.home-amount-card span {
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(245, 255, 251, 0.72);
+}
+
+.home-amount-card strong {
+  font-size: 1.45rem;
+  line-height: 1.2;
+}
+
+.home-amount-card p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: rgba(245, 255, 251, 0.78);
+}
+
+.home-insights-grid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 12px;
+}
+
+.home-insight-pill {
+  display: grid;
+  gap: 8px;
+  padding: 16px 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.home-insight-pill span {
+  font-size: 0.78rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(245, 255, 251, 0.7);
+}
+
+.home-insight-pill strong {
+  font-size: 1.02rem;
+  line-height: 1.4;
+}
+
+.home-cta-button {
+  width: 100%;
+  justify-content: center;
+  background: linear-gradient(135deg, #fff4c2, #ffd96f);
+  color: #194239;
+  box-shadow: 0 14px 28px rgba(10, 48, 42, 0.22);
+}
+
+.home-recent-panel .muted-text {
+  margin: 6px 0 0;
 }
 
 .member-balance-main,
@@ -832,6 +957,7 @@ button {
   }
 
   .hero-row,
+  .home-overview-head,
   .panel-heading,
   .expense-main,
   .receipt-upload-header,
@@ -866,10 +992,26 @@ button {
   }
 
   .metrics-grid,
+  .home-overview-grid,
+  .home-insights-grid,
   .account-stats,
   .readonly-grid,
   .summary-strip {
     grid-template-columns: 1fr;
+  }
+
+  .home-overview-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+  }
+
+  .home-amount-card strong {
+    font-size: 1.24rem;
+  }
+
+  .home-insight-pill strong {
+    font-size: 0.96rem;
   }
 
   .fab-button {

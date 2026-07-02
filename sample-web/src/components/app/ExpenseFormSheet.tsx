@@ -4,6 +4,9 @@ import {
   formatCurrency,
   formatDate,
   formatDateInput,
+  formatMoneyInput,
+  normalizeMoneyInput,
+  parseMoneyInputValue,
   roundMoney
 } from "../../lib/ui";
 import type {
@@ -37,7 +40,9 @@ export function ExpenseFormSheet({
     ? initialExpense.shares.map((share) => share.userId)
     : activeUsers.slice(0, Math.min(activeUsers.length, 3)).map((item) => item.id);
 
-  const [amount, setAmount] = useState<string>(initialExpense ? String(initialExpense.amount) : "");
+  const [amount, setAmount] = useState<string>(
+    initialExpense ? normalizeMoneyInput(String(initialExpense.amount)) : ""
+  );
   const [description, setDescription] = useState<string>(initialExpense?.description || "");
   const [imageUrl, setImageUrl] = useState<string>(initialExpense?.imageUrl || "");
   const [splitType, setSplitType] = useState<ExpenseSplitType>(initialExpense?.splitType || "EQUAL");
@@ -46,7 +51,7 @@ export function ExpenseFormSheet({
     const values: Record<number, string> = {};
     if (initialExpense) {
       initialExpense.shares.forEach((share) => {
-        values[share.userId] = String(share.shareAmount);
+        values[share.userId] = normalizeMoneyInput(String(share.shareAmount));
       });
     }
     return values;
@@ -58,9 +63,9 @@ export function ExpenseFormSheet({
 
   const expenseDate = initialExpense?.expenseDate || formatDateInput(new Date());
   const payerId = initialExpense?.payerId || currentUser.id || activeUsers[0]?.id || 0;
-  const numericAmount = Number(amount || 0);
+  const numericAmount = parseMoneyInputValue(amount);
   const equalPreview = calculateEqualSplit(numericAmount, selectedIds.length);
-  const manualTotal = selectedIds.reduce((sum, userId) => sum + Number(manualShares[userId] || 0), 0);
+  const manualTotal = selectedIds.reduce((sum, userId) => sum + parseMoneyInputValue(manualShares[userId] || ""), 0);
 
   function toggleUser(userId: number) {
     setSelectedIds((current) => {
@@ -114,7 +119,7 @@ export function ExpenseFormSheet({
     } else {
       shares = selectedIds.map((userId) => ({
         userId,
-        shareAmount: Number(manualShares[userId] || 0)
+        shareAmount: parseMoneyInputValue(manualShares[userId] || "")
       }));
 
       const roundedAmount = roundMoney(numericAmount);
@@ -153,7 +158,12 @@ export function ExpenseFormSheet({
         <form className="sheet-form" onSubmit={handleSubmit}>
           <label>
             Tổng tiền
-            <input type="number" step="0.01" value={amount} onChange={(event) => setAmount(event.target.value)} />
+            <input
+              inputMode="decimal"
+              placeholder="0"
+              value={formatMoneyInput(amount)}
+              onChange={(event) => setAmount(normalizeMoneyInput(event.target.value))}
+            />
           </label>
 
           <label>
@@ -193,7 +203,7 @@ export function ExpenseFormSheet({
             />
             {imageUrl && (
               <div className="receipt-preview">
-                <img alt="Ảnh hóa đơn" src={imageUrl} />
+                <img alt="Ảnh hóa đơn" decoding="async" src={imageUrl} />
                 <a href={imageUrl} rel="noreferrer" target="_blank">
                   Xem ảnh đầy đủ
                 </a>
@@ -254,13 +264,13 @@ export function ExpenseFormSheet({
                   <label key={userId}>
                     {member.fullName}
                     <input
-                      type="number"
-                      step="0.01"
-                      value={manualShares[userId] || ""}
+                      inputMode="decimal"
+                      placeholder="0"
+                      value={formatMoneyInput(manualShares[userId] || "")}
                       onChange={(event) =>
                         setManualShares((current) => ({
                           ...current,
-                          [userId]: event.target.value
+                          [userId]: normalizeMoneyInput(event.target.value)
                         }))
                       }
                     />

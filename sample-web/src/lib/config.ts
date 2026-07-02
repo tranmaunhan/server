@@ -8,7 +8,7 @@ export function getAppConfig(): AppConfig {
   const runtimeConfig = window.__APP_CONFIG__ || {};
 
   return {
-    appName: runtimeConfig.APP_NAME || "Family Expense PWA",
+    appName: runtimeConfig.APP_NAME || "A1.403",
     apiBaseUrl: runtimeConfig.API_BASE_URL || "/api",
     googleClientId: runtimeConfig.GOOGLE_CLIENT_ID || ""
   };

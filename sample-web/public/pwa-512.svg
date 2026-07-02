@@ -1,5 +1,26 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="128" fill="#0f766e"/>
-  <circle cx="256" cy="256" r="156" fill="#f8faf7"/>
-  <path d="M211 187h90c28 0 50 22 50 50s-22 50-50 50h-56v66h-34V187zm34 66h52c11 0 20-7 20-16s-9-16-20-16h-52v32z" fill="#0f766e"/>
+  <defs>
+    <linearGradient id="bg512" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0f766e" />
+      <stop offset="1" stop-color="#26a17b" />
+    </linearGradient>
+    <linearGradient id="wallet512" x1="148" y1="232" x2="364" y2="376" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#f7fbf8" />
+      <stop offset="1" stop-color="#dff3eb" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="128" fill="url(#bg512)" />
+  <path d="M106 212 256 100l150 112" fill="none" stroke="#dff3eb" stroke-linecap="round" stroke-linejoin="round" stroke-width="36" />
+  <path d="M152 204v88c0 20 16 36 36 36h136c20 0 36-16 36-36v-88" fill="none" stroke="#dff3eb" stroke-linecap="round" stroke-linejoin="round" stroke-width="36" />
+
+  <rect x="140" y="236" width="232" height="148" rx="44" fill="url(#wallet512)" />
+  <path d="M308 264h60c16 0 28 12 28 28v36h-88c-20 0-36-16-36-36s16-28 36-28Z" fill="#b9e7d6" />
+  <circle cx="334" cy="296" r="14" fill="#0f766e" />
+
+  <g transform="translate(312 132)">
+    <circle cx="0" cy="0" r="60" fill="#f6c453" />
+    <circle cx="0" cy="0" r="42" fill="#ffe39a" />
+    <path d="M0-20v40M-15-10c3-6 11-10 22-10 10 0 18 4 18 12 0 16-40 8-40 24 0 8 8 14 20 14 10 0 18-4 22-10" fill="none" stroke="#8d6518" stroke-linecap="round" stroke-linejoin="round" stroke-width="8" />
+  </g>
 </svg>

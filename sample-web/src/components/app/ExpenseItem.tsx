@@ -27,7 +27,13 @@ export function ExpenseItem({
           <p>{expense.shares.map((share) => `${share.fullName}: ${formatCurrency(share.shareAmount)}`).join(" · ")}</p>
           {expense.imageUrl && (
             <>
-              <img className="expense-receipt-image" alt="Ảnh hóa đơn" src={expense.imageUrl} />
+              <img
+                alt="Ảnh hóa đơn"
+                className="expense-receipt-image"
+                decoding="async"
+                loading="lazy"
+                src={expense.imageUrl}
+              />
               <p>
                 <a href={expense.imageUrl} rel="noreferrer" target="_blank">
                   Xem ảnh hóa đơn
