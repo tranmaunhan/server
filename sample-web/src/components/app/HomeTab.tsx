@@ -19,7 +19,6 @@ export function HomeTab({ dashboard, onAddExpense, user }: HomeTabProps) {
             <h2>Tổng quan chi tiêu hôm nay</h2>
             <p className="hero-note">Tạo khoản chi mới thật nhanh và theo dõi số liệu trong ngày.</p>
           </div>
-          <img className="hero-avatar" alt={user.fullName} src={user.avatarUrl || fallbackAvatar(user.fullName)} />
         </div>
         <button className="primary-button" onClick={onAddExpense} type="button">
           Thêm khoản chi mới

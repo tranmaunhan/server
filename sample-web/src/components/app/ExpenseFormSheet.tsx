@@ -53,7 +53,8 @@ export function ExpenseFormSheet({
   });
   const [formError, setFormError] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const libraryInputRef = useRef<HTMLInputElement | null>(null);
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
 
   const expenseDate = initialExpense?.expenseDate || formatDateInput(new Date());
   const payerId = initialExpense?.payerId || currentUser.id || activeUsers[0]?.id || 0;
@@ -138,14 +139,15 @@ export function ExpenseFormSheet({
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <section className="sheet-card" onClick={(event) => event.stopPropagation()}>
-        <div className="panel-heading">
+        <button aria-label="Đóng form" className="icon-button sheet-close-button" onClick={onClose} type="button">
+          ×
+        </button>
+
+        <div className="panel-heading sheet-header">
           <div>
             <p className="eyebrow">{initialExpense ? "Chỉnh sửa" : "Thêm mới"}</p>
             <h3>{initialExpense ? "Cập nhật khoản chi" : "Thêm khoản chi"}</h3>
           </div>
-          <button className="icon-button" onClick={onClose} type="button">
-            ×
-          </button>
         </div>
 
         <form className="sheet-form" onSubmit={handleSubmit}>
@@ -162,15 +164,27 @@ export function ExpenseFormSheet({
           <div className="receipt-upload-card">
             <div className="receipt-upload-header">
               <div>
-                <strong>Chụp hoặc tải ảnh hóa đơn</strong>
-                <p>{uploadingImage ? "Đang tải ảnh lên server..." : "Ảnh sẽ được lưu ngay trên server và gắn vào khoản chi."}</p>
+                <strong>Ảnh hóa đơn</strong>
+                <p>{uploadingImage ? "Đang tải ảnh lên server..." : "Bạn có thể chọn ảnh từ thư viện hoặc mở camera để chụp mới."}</p>
               </div>
-              <button className="secondary-button" onClick={() => fileInputRef.current?.click()} type="button">
-                {uploadingImage ? "Đang tải..." : "Chọn ảnh"}
-              </button>
+              <div className="receipt-upload-actions">
+                <button className="secondary-button" onClick={() => libraryInputRef.current?.click()} type="button">
+                  Thư viện
+                </button>
+                <button className="secondary-button" onClick={() => cameraInputRef.current?.click()} type="button">
+                  Camera
+                </button>
+              </div>
             </div>
             <input
-              ref={fileInputRef}
+              ref={libraryInputRef}
+              accept="image/*"
+              hidden
+              onChange={handleImagePick}
+              type="file"
+            />
+            <input
+              ref={cameraInputRef}
               accept="image/*"
               capture="environment"
               hidden

@@ -43,7 +43,11 @@ public class SettlementServiceImpl implements SettlementService {
   @Override
   @Transactional(readOnly = true)
   public List<SettlementResponse> list(int year, int month) {
-    return settlementMapper.toResponses(settlementRepository.findAllByYearAndMonthOrderByStatusAscCreatedAtDesc(year, month));
+    return settlementMapper.toResponses(
+      settlementRepository.findAllByYearAndMonthOrderByStatusAscCreatedAtDesc(year, month).stream()
+        .filter(settlement -> settlement.getFromUser().isActive() && settlement.getToUser().isActive())
+        .toList()
+    );
   }
 
   @Override

@@ -417,6 +417,7 @@ button {
 }
 
 .sheet-card {
+  position: relative;
   width: min(100%, 540px);
   max-height: min(88vh, 880px);
   overflow: auto;
@@ -424,6 +425,17 @@ button {
   background: #fff;
   padding: 20px;
   box-shadow: 0 28px 80px rgba(12, 24, 21, 0.25);
+}
+
+.sheet-header {
+  padding-right: 56px;
+}
+
+.sheet-close-button {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 2;
 }
 
 .sheet-form label,
@@ -448,6 +460,12 @@ button {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+}
+
+.receipt-upload-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .receipt-upload-header p {
@@ -580,7 +598,7 @@ button {
 
 .fab-button {
   position: fixed;
-  right: max(22px, calc((100vw - min(calc(100vw - 24px), var(--mobile-shell-width))) / 2 + 16px));
+  right: max(32px, calc((100vw - min(calc(100vw - 24px), var(--mobile-shell-width))) / 2 + 16px));
   bottom: calc(88px + var(--safe-bottom));
   width: 60px;
   height: 60px;
@@ -832,6 +850,14 @@ button {
 
   .member-actions {
     width: 100%;
+  }
+
+  .receipt-upload-actions {
+    width: 100%;
+  }
+
+  .receipt-upload-actions button {
+    flex: 1 1 0;
   }
 
   .member-actions select,

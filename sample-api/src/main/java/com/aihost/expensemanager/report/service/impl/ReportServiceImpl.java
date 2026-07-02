@@ -42,7 +42,7 @@ public class ReportServiceImpl implements ReportService {
     Map<Long, BigDecimal> shareMap = new HashMap<>();
     Map<Long, AppUser> users = new HashMap<>();
 
-    for (AppUser user : userService.getAllUsers()) {
+    for (AppUser user : userService.getActiveUsers()) {
       users.put(user.getId(), user);
       paidMap.put(user.getId(), MoneyUtils.ZERO);
       shareMap.put(user.getId(), MoneyUtils.ZERO);
