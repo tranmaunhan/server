@@ -10,6 +10,7 @@ import com.aihost.expensemanager.expense.service.ExpenseService;
 import com.aihost.expensemanager.security.CurrentUser;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -19,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class DashboardServiceImpl implements DashboardService {
+
+  private static final ZoneId APP_ZONE_ID = ZoneId.of("Asia/Ho_Chi_Minh");
 
   private final ExpenseService expenseService;
   private final ExpenseMapper expenseMapper;
@@ -31,7 +34,7 @@ public class DashboardServiceImpl implements DashboardService {
   @Override
   @Transactional(readOnly = true)
   public DashboardResponse getDashboard(CurrentUser currentUser) {
-    LocalDate today = LocalDate.now();
+    LocalDate today = LocalDate.now(APP_ZONE_ID);
     LocalDate monthStart = today.withDayOfMonth(1);
     LocalDate monthEnd = today.withDayOfMonth(today.lengthOfMonth());
 
