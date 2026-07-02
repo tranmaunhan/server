@@ -62,7 +62,7 @@ public class GoogleTokenVerifierServiceImpl implements GoogleTokenVerifierServic
       return new GoogleUserProfile(
         jwt.getSubject(),
         jwt.getClaimAsString("email"),
-        Boolean.parseBoolean(String.valueOf(jwt.getClaim("email_verified"))),
+        readBooleanClaim(jwt.getClaim("email_verified")),
         jwt.getClaimAsString("name"),
         jwt.getClaimAsString("picture")
       );
@@ -112,6 +112,19 @@ public class GoogleTokenVerifierServiceImpl implements GoogleTokenVerifierServic
       return credential;
     }
     return credential.substring(0, 6) + "..." + credential.substring(credential.length() - 6);
+  }
+
+  private boolean readBooleanClaim(Object claimValue) {
+    if (claimValue instanceof Boolean booleanValue) {
+      return booleanValue;
+    }
+    if (claimValue instanceof String stringValue) {
+      return Boolean.parseBoolean(stringValue);
+    }
+    if (claimValue instanceof Number numberValue) {
+      return numberValue.intValue() != 0;
+    }
+    return false;
   }
 
   static final class AllowedIssuerValidator implements OAuth2TokenValidator<Jwt> {
