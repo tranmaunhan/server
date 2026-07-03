@@ -219,6 +219,25 @@ button {
   gap: 14px;
 }
 
+.expense-list-summary,
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.expense-list-summary {
+  color: #5f7a71;
+  font-size: 0.9rem;
+}
+
+.pagination-bar {
+  padding-top: 4px;
+  color: #31594f;
+  font-size: 0.92rem;
+}
+
 .hero-card,
 .panel-card,
 .metric-card,
@@ -1124,6 +1143,12 @@ button {
 
   .inline-meta {
     font-size: 0.86rem;
+  }
+
+  .expense-list-summary,
+  .pagination-bar {
+    align-items: flex-start;
+    flex-direction: column;
   }
 
   .settlement-group-header {

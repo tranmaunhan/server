@@ -5,8 +5,8 @@ import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public record ExpenseShareRequest(
-  @NotNull(message = "khong duoc de trong") Long userId,
-  @DecimalMin(value = "0.00", inclusive = false, message = "phai lon hon 0")
+  @NotNull(message = "Không được để trống.") Long userId,
+  @DecimalMin(value = "0.00", inclusive = false, message = "Phải lớn hơn 0.")
   BigDecimal shareAmount
 ) {
 }

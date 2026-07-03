@@ -18,6 +18,7 @@ import type {
   Expense,
   ExpensePayload,
   MonthlyReport,
+  PagedResponse,
   Settlement,
   User,
   UserOption,
@@ -28,6 +29,7 @@ const GOOGLE_SCRIPT_ID = "google-identity-services";
 const PULL_REFRESH_THRESHOLD = 84;
 const PULL_REFRESH_MAX = 132;
 const PULL_REFRESH_HOLD = 68;
+const EXPENSE_PAGE_SIZE = 10;
 
 const config = getAppConfig();
 const api = new ApiClient(config.apiBaseUrl, () => getToken());
@@ -39,7 +41,8 @@ export default function App() {
   const [users, setUsers] = useState<UserOption[]>([]);
   const [adminUsers, setAdminUsers] = useState<UserOption[]>([]);
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [expensePage, setExpensePage] = useState(0);
+  const [expensePageData, setExpensePageData] = useState<PagedResponse<Expense> | null>(null);
   const [report, setReport] = useState<MonthlyReport | null>(null);
   const [settlements, setSettlements] = useState<Settlement[]>([]);
   const [year, setYear] = useState<number>(today.getFullYear());
@@ -185,13 +188,13 @@ export default function App() {
     return api.getAdminUsers();
   }
 
-  async function syncAppData(nextYear = year, nextMonth = month) {
+  async function syncAppData(nextYear = year, nextMonth = month, nextExpensePage = expensePage) {
     setError("");
     const [me, memberList, dashboardData, expenseList, reportData, settlementList] = await Promise.all([
       api.getMe(),
       api.getUsers(),
       api.getDashboard(),
-      api.getExpenses(),
+      api.getExpenses(nextExpensePage, EXPENSE_PAGE_SIZE),
       api.getMonthlyReport(nextYear, nextMonth),
       api.getSettlements(nextYear, nextMonth)
     ]);
@@ -201,17 +204,18 @@ export default function App() {
     setUsers(memberList);
     setAdminUsers(nextAdminUsers);
     setDashboard(dashboardData);
-    setExpenses(expenseList);
+    setExpensePageData(expenseList);
+    setExpensePage(expenseList.page);
     setReport(reportData);
     setSettlements(settlementList);
     saveUser(JSON.stringify(me));
   }
 
-  async function bootstrap(nextYear = year, nextMonth = month) {
+  async function bootstrap(nextYear = year, nextMonth = month, nextExpensePage = expensePage) {
     setLoading(true);
 
     try {
-      await syncAppData(nextYear, nextMonth);
+      await syncAppData(nextYear, nextMonth, nextExpensePage);
     } catch (bootstrapError) {
       handleApiError(bootstrapError);
       logout();
@@ -240,23 +244,21 @@ export default function App() {
     }
   }
 
-  async function refreshOverview() {
-    try {
-      const adminUsersPromise = loadAdminUsers(user);
-      const [memberList, dashboardData, expenseList] = await Promise.all([
-        api.getUsers(),
-        api.getDashboard(),
-        api.getExpenses()
-      ]);
-      const nextAdminUsers = await adminUsersPromise;
+  async function refreshOverview(nextExpensePage = expensePage) {
+    const adminUsersPromise = loadAdminUsers(user);
+    const [memberList, dashboardData, expenseList] = await Promise.all([
+      api.getUsers(),
+      api.getDashboard(),
+      api.getExpenses(nextExpensePage, EXPENSE_PAGE_SIZE)
+    ]);
+    const nextAdminUsers = await adminUsersPromise;
 
-      setUsers(memberList);
-      setAdminUsers(nextAdminUsers);
-      setDashboard(dashboardData);
-      setExpenses(expenseList);
-    } catch (overviewError) {
-      handleApiError(overviewError);
-    }
+    setUsers(memberList);
+    setAdminUsers(nextAdminUsers);
+    setDashboard(dashboardData);
+    setExpensePageData(expenseList);
+    setExpensePage(expenseList.page);
+    return expenseList;
   }
 
   async function handlePullRefresh() {
@@ -268,7 +270,7 @@ export default function App() {
     updatePullDistance(PULL_REFRESH_HOLD);
 
     try {
-      await syncAppData(year, month);
+      await syncAppData(year, month, expensePage);
       setMessage("Đã làm mới dữ liệu.");
     } catch (refreshError) {
       handleApiError(refreshError);
@@ -360,6 +362,8 @@ export default function App() {
 
   async function handleSaveExpense(payload: ExpensePayload) {
     try {
+      const nextExpensePage = editingExpense ? expensePage : 0;
+
       if (editingExpense) {
         await api.updateExpense(editingExpense.id, payload);
         setMessage("Đã cập nhật khoản chi.");
@@ -370,7 +374,7 @@ export default function App() {
 
       setShowExpenseForm(false);
       setEditingExpense(null);
-      await refreshOverview();
+      await refreshOverview(nextExpensePage);
       await refreshPeriodData(year, month);
     } catch (saveError) {
       handleApiError(saveError);
@@ -395,7 +399,10 @@ export default function App() {
     try {
       await api.deleteExpense(expenseId);
       setMessage("Đã xóa khoản chi.");
-      await refreshOverview();
+      const nextPageData = await refreshOverview(expensePage);
+      if (!nextPageData.items.length && expensePage > 0) {
+        await refreshOverview(expensePage - 1);
+      }
       await refreshPeriodData(year, month);
     } catch (deleteError) {
       handleApiError(deleteError);
@@ -406,7 +413,7 @@ export default function App() {
     try {
       await api.updateUserRole(userId, role);
       setMessage("Đã cập nhật quyền thành viên.");
-      await refreshOverview();
+      await refreshOverview(expensePage);
     } catch (roleError) {
       handleApiError(roleError);
     }
@@ -416,7 +423,7 @@ export default function App() {
     try {
       await api.updateUserStatus(userId, active);
       setMessage(active ? "Đã mở khóa thành viên." : "Đã khóa thành viên.");
-      await refreshOverview();
+      await refreshOverview(expensePage);
     } catch (statusError) {
       handleApiError(statusError);
     }
@@ -437,8 +444,24 @@ export default function App() {
       await api.updateSettlementStatus(settlementId, "PAID");
       setMessage("Đã xác nhận đã nhận tiền.");
       await refreshPeriodData(year, month);
+      await refreshOverview(expensePage);
     } catch (settlementError) {
       handleApiError(settlementError);
+    }
+  }
+
+  async function handleExpensePageChange(nextPage: number) {
+    setLoading(true);
+    setError("");
+
+    try {
+      const nextPageData = await api.getExpenses(nextPage, EXPENSE_PAGE_SIZE);
+      setExpensePageData(nextPageData);
+      setExpensePage(nextPageData.page);
+    } catch (pageError) {
+      handleApiError(pageError);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -464,7 +487,8 @@ export default function App() {
     setUsers([]);
     setAdminUsers([]);
     setDashboard(null);
-    setExpenses([]);
+    setExpensePageData(null);
+    setExpensePage(0);
     setReport(null);
     setSettlements([]);
     buttonRenderedRef.current = false;
@@ -484,6 +508,7 @@ export default function App() {
     : pullDistance >= PULL_REFRESH_THRESHOLD
       ? "Thả tay để làm mới"
       : "Kéo xuống để làm mới";
+  const expenses = expensePageData?.items || [];
 
   if (!user) {
     return (
@@ -535,11 +560,15 @@ export default function App() {
 
           {activeTab === "expenses" && (
             <ExpensesTab
+              currentPage={expensePage}
               currentUser={user}
               expenses={expenses}
               onCreate={openCreateExpense}
               onDelete={handleDeleteExpense}
               onEdit={openEditExpense}
+              onPageChange={handleExpensePageChange}
+              totalItems={expensePageData?.totalItems || 0}
+              totalPages={expensePageData?.totalPages || 0}
             />
           )}
 

@@ -1,5 +1,6 @@
 package com.aihost.expensemanager.expense.service.impl;
 
+import com.aihost.expensemanager.common.dto.PageResponse;
 import com.aihost.expensemanager.common.exception.BadRequestException;
 import com.aihost.expensemanager.common.exception.ForbiddenException;
 import com.aihost.expensemanager.common.exception.NotFoundException;
@@ -25,12 +26,18 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class ExpenseServiceImpl implements ExpenseService {
 
+  private static final int DEFAULT_PAGE_SIZE = 10;
+  private static final int MAX_PAGE_SIZE = 50;
   private static final Set<ExpenseStatus> VISIBLE_STATUSES = EnumSet.of(ExpenseStatus.ACTIVE, ExpenseStatus.SETTLED);
 
   private final ExpenseRepository expenseRepository;
@@ -107,9 +114,24 @@ public class ExpenseServiceImpl implements ExpenseService {
 
   @Override
   @Transactional(readOnly = true)
-  public List<ExpenseResponse> getAll() {
-    return expenseMapper.toResponseList(
-      expenseRepository.findAllByStatusInOrderByExpenseDateDescCreatedAtDesc(VISIBLE_STATUSES)
+  public PageResponse<ExpenseResponse> getPage(int page, int size) {
+    int normalizedPage = Math.max(page, 0);
+    int normalizedSize = normalizePageSize(size);
+    Pageable pageable = PageRequest.of(
+      normalizedPage,
+      normalizedSize,
+      Sort.by(Sort.Order.desc("expenseDate"), Sort.Order.desc("createdAt"))
+    );
+
+    Page<Expense> expensePage = expenseRepository.findAllByStatusIn(VISIBLE_STATUSES, pageable);
+    return new PageResponse<>(
+      expenseMapper.toResponseList(expensePage.getContent()),
+      expensePage.getNumber(),
+      expensePage.getSize(),
+      expensePage.getTotalElements(),
+      expensePage.getTotalPages(),
+      expensePage.isFirst(),
+      expensePage.isLast()
     );
   }
 
@@ -167,6 +189,14 @@ public class ExpenseServiceImpl implements ExpenseService {
     if (currentUser == null || expense.getCreatedBy() == null || !expense.getCreatedBy().getId().equals(currentUser.id())) {
       throw new ForbiddenException("Bạn chỉ có thể sửa hoặc xóa khoản chi do chính mình tạo.");
     }
+  }
+
+  private int normalizePageSize(int size) {
+    if (size <= 0) {
+      return DEFAULT_PAGE_SIZE;
+    }
+
+    return Math.min(size, MAX_PAGE_SIZE);
   }
 
   private void fillExpense(

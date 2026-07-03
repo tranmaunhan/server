@@ -5,6 +5,7 @@ import type {
   ExpensePayload,
   FileUploadResponse,
   MonthlyReport,
+  PagedResponse,
   Settlement,
   SettlementStatus,
   User,
@@ -76,8 +77,8 @@ export class ApiClient {
     return this.request<DashboardResponse>("/dashboard");
   }
 
-  getExpenses() {
-    return this.request<Expense[]>("/expenses");
+  getExpenses(page = 0, size = 10) {
+    return this.request<PagedResponse<Expense>>(`/expenses?page=${page}&size=${size}`);
   }
 
   createExpense(payload: ExpensePayload) {
@@ -150,7 +151,7 @@ export class ApiClient {
         payload
       });
       throw new ApiError(
-        payload.message || `Yeu cau that bai. (${response.status})`,
+        payload.message || `Yêu cầu thất bại. (${response.status})`,
         response.status,
         url,
         payload
@@ -198,7 +199,7 @@ export class ApiClient {
         payload
       });
       throw new ApiError(
-        (payload as { message?: string }).message || `Yeu cau that bai. (${response.status})`,
+        (payload as { message?: string }).message || `Yêu cầu thất bại. (${response.status})`,
         response.status,
         url,
         payload

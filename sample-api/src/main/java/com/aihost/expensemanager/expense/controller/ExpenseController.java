@@ -1,5 +1,6 @@
 package com.aihost.expensemanager.expense.controller;
 
+import com.aihost.expensemanager.common.dto.PageResponse;
 import com.aihost.expensemanager.expense.dto.CreateExpenseRequest;
 import com.aihost.expensemanager.expense.dto.ExpenseResponse;
 import com.aihost.expensemanager.expense.dto.UpdateExpenseRequest;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -28,8 +30,11 @@ public class ExpenseController {
   }
 
   @GetMapping
-  public List<ExpenseResponse> list() {
-    return expenseService.getAll();
+  public PageResponse<ExpenseResponse> list(
+    @RequestParam(defaultValue = "0") int page,
+    @RequestParam(defaultValue = "10") int size
+  ) {
+    return expenseService.getPage(page, size);
   }
 
   @GetMapping("/{expenseId}")

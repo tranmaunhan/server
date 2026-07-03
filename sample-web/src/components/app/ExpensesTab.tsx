@@ -2,20 +2,30 @@ import type { Expense, User } from "../../types";
 import { ExpenseItem } from "./ExpenseItem";
 
 interface ExpensesTabProps {
+  currentPage: number;
   currentUser: User;
   expenses: Expense[];
   onCreate: () => void;
   onDelete: (expenseId: number) => void;
   onEdit: (expense: Expense) => void;
+  onPageChange: (page: number) => void;
+  totalItems: number;
+  totalPages: number;
 }
 
 export function ExpensesTab({
+  currentPage,
   currentUser,
   expenses,
   onCreate,
   onDelete,
-  onEdit
+  onEdit,
+  onPageChange,
+  totalItems,
+  totalPages
 }: ExpensesTabProps) {
+  const hasPagination = totalPages > 1;
+
   return (
     <div className="tab-stack">
       <section className="panel-card compact-panel">
@@ -27,6 +37,11 @@ export function ExpensesTab({
           <button className="secondary-button" onClick={onCreate} type="button">
             Thêm mới
           </button>
+        </div>
+
+        <div className="expense-list-summary">
+          <span>Tổng cộng {totalItems} khoản chi</span>
+          <span>Mỗi trang 10 khoản</span>
         </div>
 
         <div className="list-stack">
@@ -41,6 +56,30 @@ export function ExpensesTab({
           ))}
           {!expenses.length && <p className="muted-text">Chưa có dữ liệu khoản chi.</p>}
         </div>
+
+        {hasPagination && (
+          <div className="pagination-bar">
+            <button
+              className="secondary-button"
+              disabled={currentPage <= 0}
+              onClick={() => onPageChange(currentPage - 1)}
+              type="button"
+            >
+              Trang trước
+            </button>
+            <span>
+              Trang {currentPage + 1} / {totalPages}
+            </span>
+            <button
+              className="secondary-button"
+              disabled={currentPage + 1 >= totalPages}
+              onClick={() => onPageChange(currentPage + 1)}
+              type="button"
+            >
+              Trang sau
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

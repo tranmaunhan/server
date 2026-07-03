@@ -3,6 +3,16 @@ export type ExpenseSplitType = "EQUAL" | "AMOUNT";
 export type ExpenseStatus = "ACTIVE" | "SETTLED" | "CANCELLED";
 export type SettlementStatus = "PENDING" | "PAID";
 
+export interface PagedResponse<T> {
+  items: T[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+  first: boolean;
+  last: boolean;
+}
+
 export interface User {
   id: number;
   email: string;

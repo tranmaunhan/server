@@ -11,14 +11,14 @@ import java.time.LocalDate;
 import java.util.List;
 
 public record UpdateExpenseRequest(
-  @NotNull(message = "khong duoc de trong") Long payerId,
-  @NotNull(message = "khong duoc de trong")
-  @DecimalMin(value = "0.01", inclusive = true, message = "phai lon hon 0")
+  @NotNull(message = "Không được để trống.") Long payerId,
+  @NotNull(message = "Không được để trống.")
+  @DecimalMin(value = "0.01", inclusive = true, message = "Phải lớn hơn 0.")
   BigDecimal amount,
-  @NotBlank(message = "khong duoc de trong") String description,
+  @NotBlank(message = "Không được để trống.") String description,
   String imageUrl,
-  @NotNull(message = "khong duoc de trong") LocalDate expenseDate,
-  @NotNull(message = "khong duoc de trong") ExpenseSplitType splitType,
-  @Valid @NotEmpty(message = "phai co it nhat mot nguoi chiu tien") List<ExpenseShareRequest> shares
+  @NotNull(message = "Không được để trống.") LocalDate expenseDate,
+  @NotNull(message = "Không được để trống.") ExpenseSplitType splitType,
+  @Valid @NotEmpty(message = "Phải có ít nhất một người chịu tiền.") List<ExpenseShareRequest> shares
 ) {
 }

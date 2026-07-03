@@ -47,7 +47,7 @@ export function HomeTab({ dashboard, user }: HomeTabProps) {
         <div className="panel-heading compact-heading">
           <div>
             <p className="eyebrow">Gần đây</p>
-            <h3>Khoản chi mới nhất</h3>
+            <h3>Khoản chi chưa quyết toán mới nhất</h3>
           </div>
         </div>
 
@@ -55,7 +55,7 @@ export function HomeTab({ dashboard, user }: HomeTabProps) {
           {(dashboard?.recentExpenses || []).map((expense) => (
             <ExpenseItem key={expense.id} compact expense={expense} />
           ))}
-          {!dashboard?.recentExpenses?.length && <p className="muted-text">Chưa có khoản chi nào trong tháng này.</p>}
+          {!dashboard?.recentExpenses?.length && <p className="muted-text">Chưa có khoản chi chưa quyết toán trong tháng này.</p>}
         </div>
       </section>
     </div>
